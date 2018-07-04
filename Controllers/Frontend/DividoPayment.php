@@ -201,9 +201,14 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         }
 
         if($customer['address']!=$customer['shippingAddress']){
+            $displayFinance = false;
             $displayWarning =$displayWarning." Shipping and billing address must match.";
         }
 
+        if($apiKey === ''){
+            $displayFinance = false;
+            $displayWarning =$displayWarning." No Api Key Detected. Please contact the merchant.";
+        }
 
         if(!$displayFinance){
             $displayForm='style="display:none";';
