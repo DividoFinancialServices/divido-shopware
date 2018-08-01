@@ -505,14 +505,15 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
 
     public function transformShopwareToDividoAddress($shopwareAddressArray)
     {
+        $this->debug('Add array:'.serialize($shopwareAddressArray), 'info');
 
-        $addressText = $shopwareAddressArray['street'] . ' ' . $shopwareAddressArray['city'] . ' ' . $shopwareAddressArray['zipcode']; 
+        $addressText = $shopwareAddressArray['buildingNumber'] .' '. $shopwareAddressArray['street'] . ' ' . $shopwareAddressArray['city'] . ' ' . $shopwareAddressArray['zipcode']; 
         $dividoAddressArray = array();
         $dividoAddressArray['postcode']=$shopwareAddressArray['zipcode'];
         $dividoAddressArray['street']=$shopwareAddressArray['street'];
-        $dividoAddressArray['flat']='';
-        $dividoAddressArray['buildingNumber']='';
-        $dividoAddressArray['buildingName']='';
+        $dividoAddressArray['flat']=$shopwareAddressArray['flat'];
+        $dividoAddressArray['buildingNumber']=$shopwareAddressArray['buildingNumber'];
+        $dividoAddressArray['buildingName']=$shopwareAddressArray['buildingName'];
         $dividoAddressArray['town']=$shopwareAddressArray['city'];
         $dividoAddressArray['text']=$addressText;
 

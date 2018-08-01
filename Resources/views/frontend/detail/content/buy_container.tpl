@@ -1,6 +1,5 @@
 {extends file="parent:frontend/detail/content/buy_container.tpl"}
 
-{debug}
 {block name="frontend_detail_index_buy_container_inner"}
 {$smarty.block.parent}
 
