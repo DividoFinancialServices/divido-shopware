@@ -30,6 +30,21 @@ class DividoPayment extends Plugin
                 . '  Finance your cart'
                 . '</div>'
         ];
+
+        $service = $this->container->get('shopware_attribute.crud_service');
+        $service->update('s_order_attributes', 'divido_deposit_value', 'float',[
+            'displayInBackend' => true,
+            'label' => 'Divido Deposit',
+            'supportText' => 'The value of the deposit taken',
+            'helpText' => 'Deposit value'
+        ]);
+        $service->update('s_order_attributes', 'divido_finance_id', 'string',[
+            'displayInBackend' => true,
+            'label' => 'Divido Finance',
+            'supportText' => 'The ID of the finance ',
+            'helpText' => 'Divido Finance ID'
+        ]);
+
         $installer->createOrUpdate($context->getPlugin(), $options);
     }
 
@@ -38,6 +53,9 @@ class DividoPayment extends Plugin
      */
     public function uninstall(UninstallContext $context)
     {
+        $service = $this->container->get('shopware_attribute.crud_service');
+        $service->delete('s_order_attributes', 'divido_finance_id');
+        $service->delete('s_order_attributes', 'divido_deposit_value');
         $this->setActiveFlag($context->getPlugin()->getPayments(), false);
     }
 

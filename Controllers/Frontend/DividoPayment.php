@@ -149,12 +149,26 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         //persist basket if good create order 
         //return with basket if fails
         if ($response->status == 'ok') {
+
             //save order as processing
-            $this->saveOrder(
+             $this->saveOrder(
                 $response->id,
                 $token,
                 self::PAYMENTSTATUSOPEN
             );
+
+            $orderID = $this->_getOrderId($response->id);
+            $attributePersister = $this->container->get('shopware_attribute.data_persister');
+
+            $attributeData = array(
+                'divido_finance_id' => $planId,
+                'divido_deposit_value' => $deposit,
+            );
+
+            $attributePersister->persist($attributeData, 's_order_attributes', $orderID);
+
+
+            //save depost and finance plan as attribute
             
         } else {
             if ($response->status === 'error') {    
@@ -649,5 +663,18 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         
         return $this->Response();
 
+    }
+
+    /**
+     * Selects order id by transaction id.
+     *
+     * @param integer $transactionId corresponding transaction id
+     * @return order id (integer)
+     */
+    protected function _getOrderId($transactionId)
+    {
+        $sql = 'SELECT id FROM s_order WHERE transactionID=?';
+        $orderId = Shopware()->Db()->fetchOne($sql, array($transactionId));
+        return $orderId;
     }
 }

@@ -26,3 +26,32 @@ Login to your shopware backend, and open the plugin manager.
 13. Hit Save - The plugin is now installed configured and active you may also need to clear your caches for the plugin to be visible 
 14. To clear the cache go to Configuration > Cache/Performance 
 #![Step 11-14](https://s3-eu-west-1.amazonaws.com/content.divido.com/images/documentation/shopware/Step11-14.png)
+
+
+## Support
+
+If you are having general issues with this plugin, your first port of call should be our documentation.
+
+If you want to keep up to date with release announcements, discuss ideas for the project,
+or ask more detailed questions, you can contact our support deparment support@divido.com
+
+If you believe you have found a bug, please report it using the [GitHub issue tracker](https://github.com/DividoFinancialServices/divido-shopware/issues),
+or better yet, fork the library and submit a pull request.
+
+## Change log
+
+Please see [CHANGELOG](CHANGELOG.md) for more information what has changed recently.
+
+## Contributing
+
+Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+
+## Security
+
+If you discover any security related issues, please email jonathan.carter@divido.com instead of using the issue tracker.
+
+## Credits
+
+- [:DividoFinancialServices](https://github.com/DividoFinancialServices)
+- [All Contributors](../../contributors)
+
