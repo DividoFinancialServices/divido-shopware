@@ -167,7 +167,6 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
 
             $attributePersister->persist($attributeData, 's_order_attributes', $orderID);
 
-
             //save depost and finance plan as attribute
             
         } else {
@@ -176,7 +175,6 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                 $this->forward('cancel');
             }
         }
-
 
         //Customer
         //Redirect to returned application or if fail killit 

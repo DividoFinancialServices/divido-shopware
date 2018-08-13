@@ -1,10 +1,7 @@
 {extends file="frontend/checkout/confirm.tpl"}
-{debug}
 
 {block name="frontend_index_content"}
-{debug}
-
-    <div id="payment">
+    <div id="payment content confirm-content">
     <h2>
     Choose your Finance option
     </h2>
@@ -51,6 +48,9 @@
 
     </div>
     <script>
+    document.body.classList.add("is--ctl-checkout");
+    document.body.classList.add("is--act-confirm");
+    document.body.classList.add("is--minimal-header");
     document.addEventListener("DOMContentLoaded", function(
       
     ){
