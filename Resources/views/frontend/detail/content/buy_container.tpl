@@ -7,6 +7,13 @@
       <script> 
         var dividoKey = "{$apiKey}";
       </script>
+      <style>
+       .divido-widget-logo{ 
+         display:inline-block;
+         position:relative;
+         top:2px;
+         } 
+       </style>
 
     <script src="https://cdn.divido.com/calculator/v2.1/production/js/template.divido.js"></script>
             <div
