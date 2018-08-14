@@ -52,11 +52,4 @@ class DividoPaymentService
 
     }
 
-    //remove
-    public function getDividoConfig(){
-
-        $config = Shopware()->Container()->get('shopware.plugin.cached_config_reader')->getByPluginName('DividoPayment');
-        return $config;
-    }
-
 }
