@@ -136,6 +136,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             'response_url' => $response_url,
             'redirect_url' => $redirect_url,
         ];
+//            'redirect_url' => $redirect_url.'?signature='.$basketSignature,
 
         //save order and get unique identifire
        /*
@@ -150,7 +151,9 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         //return with basket if fails
         if ($response->status == 'ok') {
 
+            //<save drafte order?
             //save order as processing
+            /*
              $this->saveOrder(
                 $response->id,
                 $token,
@@ -168,7 +171,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             $attributePersister->persist($attributeData, 's_order_attributes', $orderID);
 
             //save depost and finance plan as attribute
-            
+            */            
         } else {
             if ($response->status === 'error') {    
                 // Log the error
@@ -244,9 +247,15 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
     public function returnAction()
     {
         $this->debug('Return action','info');
-        //TODO if declined return to basket
-        $this->redirect(['controller' => 'checkout', 'action' => 'finish']);
 
+        //$response = $this->Request();
+        //$signature = $response->getParam('signature', null);
+        //$basket = $this->loadBasketFromSignature($signature);
+        //var_dump($this->getBasket());
+        //die();
+        //$this->View()->assign($basket);
+        //show total and order detail
+        //$this->View()->assign('title', $title);
     }
 
     /**
