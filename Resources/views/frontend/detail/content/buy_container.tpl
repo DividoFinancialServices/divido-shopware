@@ -3,7 +3,7 @@
 {block name="frontend_detail_index_buybox"}
 {$smarty.block.parent}
 
-{if {$sArticle.price|replace:',':'.'} > $min_product_amount }
+{if {$sArticle.price|replace:',':'.'} >= $min_product_amount }
 <!-- BEGIN DIVIDO --!>
       <script> 
         var dividoKey = "{$apiKey}";
