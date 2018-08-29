@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased] 
+- Override success page
+- Update display on finance page
 - Minor update to changelog fix version number - change version number
 - Update Readme Contributing
 - Add in finance id and deposit amount to s_order_attributes
