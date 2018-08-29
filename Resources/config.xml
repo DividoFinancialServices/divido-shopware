@@ -18,25 +18,14 @@
             <description lang="de">Debugging Enabled - Turn this off in production</description>
             <description lang="en">Debugging Enabled - Turn this off in production</description>
         </element>
-
-        <element required="true" type="select" scope="locale">
-            <name>Product Selection</name>
-            <label lang="de">Product Selection</label>
-            <label lang="en">Product Selection</label>
-            <description lang="de">Product Selection</description>
-            <description lang="en">Product Selection</description>
-                <store>
-                    <option>
-                        <value>All Products</value>
-                        <label lang="de">All Products</label>
-                        <label lang="en">All Products</label>
-                    </option>
-                    <option>
-                        <value>Products Over a certain price</value>
-                        <label lang="de">Products Over a certain price</label>
-                        <label lang="en">Products Over a certain price</label>
-                    </option>
-                </store>
+        
+        <element required="true" type="text" scope="locale">
+            <name>Minimum Amount</name>
+            <label lang="de">Display widget for products over a certain price?</label>
+            <label lang="en">Display widget for products over a certain price?</label>
+            <value>0</value>
+            <description lang="de">Only display the Divido widget if the product price is over the specified amount</description>
+            <description lang="en">Only display the Divido widget if the product price is over the specified amount</description>
         </element>
 
         <element required="true" type="text" scope="locale">
