@@ -1,14 +1,43 @@
 <?php
-
+/**
+ * Divido Payment Service
+ *
+ * PHP version 5.5
+ *
+ * @category  CategoryName
+ * @package   DividoPayment
+ * @author    Original Author <jonthan.carter@divido.com>
+ * @author    Another Author <andrew.smith@divido.com>
+ * @copyright 2014-2018 Divido Financial Services
+ * @license   GNU General Public License family
+ * @link      http://github.com/DividoFinancialServices/divido-shopware
+ * @since     File available since Release 1.0.0
+ */
 namespace DividoPayment\Components\DividoPayment;
 
+/**
+ * Divido Payment Service Class
+ *
+ * PHP version 5.5
+ *
+ * @category  CategoryName
+ * @package   DividoPayment
+ * @author    Original Author <jonthan.carter@divido.com>
+ * @author    Another Author <andrew.smith@divido.com>
+ * @copyright 2014-2018 Divido Financial Services
+ * @license   GNU General Public License family
+ * @link      http://github.com/DividoFinancialServices/divido-shopware
+ * @since     File available since Release 1.0.0
+ */
 class DividoPaymentService
 {
 
-
     /**
-     * @param PaymentResponse $response
-     * @param string $token
+     * Token Checker
+     *
+     * @param PaymentResponse $response Payment response object
+     * @param string          $token    passed token
+     *
      * @return bool
      */
     public function isValidToken(PaymentResponse $response, $token)
@@ -17,8 +46,11 @@ class DividoPaymentService
     }
 
     /**
-     * @param float $amount
-     * @param int $customerId
+     * Token Creator
+     *
+     * @param float $amount     Amount passed in
+     * @param int   $customerId Customer detail
+     *
      * @return string
      */
     public function createPaymentToken($amount, $customerId)
@@ -26,15 +58,18 @@ class DividoPaymentService
         return md5(implode('|', [$amount, $customerId]));
     }
 
-    //isValidSignature
-
-        /**
-     * @param $request \Enlight_Controller_Request_Request
+    /**
+     * Webhook Helper
+     *
+     * @param \Enlight_Controller_Request_Request $request
+     *
      * @return WebhookResponse
      */
-    public function createWebhookResponse(\Enlight_Controller_Request_Request $request){
+    public function createWebhookResponse(
+        \Enlight_Controller_Request_Request $request
+    ) {
 
-        $data = json_decode($request->getRawBody()); 
+        $data = json_decode($request->getRawBody());
 
         $dividoResponse = new WebhookResponse();
     
@@ -49,7 +84,5 @@ class DividoPaymentService
         $dividoResponse->bookingId   = $data->metadata->bookingId;
 
         return $dividoResponse;
-
     }
-
 }

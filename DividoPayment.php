@@ -1,5 +1,18 @@
 <?php
-
+/**
+ * Divido Payment Service
+ *
+ * PHP version 5.5
+ *
+ * @category  Payment_Gateway
+ * @package   DividoPayment
+ * @author    Original Author <jonthan.carter@divido.com>
+ * @author    Another Author <andrew.smith@divido.com>
+ * @copyright 2014-2018 Divido Financial Services
+ * @license   GNU General Public License family
+ * @link      http://github.com/DividoFinancialServices/divido-shopware
+ * @since     File available since Release 1.0.0
+ */
 namespace DividoPayment;
 
 use Shopware\Components\Plugin;
@@ -9,14 +22,34 @@ use Shopware\Components\Plugin\Context\InstallContext;
 use Shopware\Components\Plugin\Context\UninstallContext;
 use Shopware\Models\Payment\Payment;
 
+/**
+ * Divido Payment
+ *
+ * PHP version 5.5
+ *
+ * @category  Payment_Gateway
+ * @package   DividoPayment
+ * @author    Original Author <jonthan.carter@divido.com>
+ * @author    Another Author <andrew.smith@divido.com>
+ * @copyright 2014-2018 Divido Financial Services
+ * @license   GNU General Public License family
+ * @link      http://github.com/DividoFinancialServices/divido-shopware
+ * @since     File available since Release 1.0.0
+ */
 class DividoPayment extends Plugin
 {
     /**
-     * @param InstallContext $context
+     * Install context
+     *
+     * @param InstallContext $context The install context
+     *
+     * @return void
      */
     public function install(InstallContext $context)
     {
-        /** @var \Shopware\Components\Plugin\PaymentInstaller $installer */
+        /*
+         * @var \Shopware\Components\Plugin\PaymentInstaller $installer Installer
+         */
         $installer = $this->container->get('shopware.plugin_payment_installer');
         $options = [
             'name' => 'divido_payment',
@@ -25,31 +58,45 @@ class DividoPayment extends Plugin
             'active' => 0,
             'position' => 0,
             'additionalDescription' =>
-                '<img src="https://s3-eu-west-1.amazonaws.com/content.divido.com/images/logo-blue-75x23.png"/>'
+                '<img src="https://s3-eu-west-1.amazonaws.com/content.divido.com/images/logo-blue-75x23.png"/>' //
                 . '<div id="payment_desc">'
                 . '  Finance your cart'
                 . '</div>'
         ];
 
         $service = $this->container->get('shopware_attribute.crud_service');
-        $service->update('s_order_attributes', 'divido_deposit_value', 'float',[
+        $service->update(
+            's_order_attributes',
+            'divido_deposit_value',
+            'float',
+            [
             'displayInBackend' => true,
             'label' => 'Divido Deposit',
             'supportText' => 'The value of the deposit taken',
             'helpText' => 'Deposit value'
-        ]);
-        $service->update('s_order_attributes', 'divido_finance_id', 'string',[
+            ]
+        );
+        $service->update(
+            's_order_attributes',
+            'divido_finance_id',
+            'string',
+            [
             'displayInBackend' => true,
             'label' => 'Divido Finance',
             'supportText' => 'The ID of the finance ',
             'helpText' => 'Divido Finance ID'
-        ]);
+            ]
+        );
 
         $installer->createOrUpdate($context->getPlugin(), $options);
     }
 
     /**
+     * Uninstall context
+     *
      * @param UninstallContext $context
+     *
+     * @return void
      */
     public function uninstall(UninstallContext $context)
     {
@@ -60,7 +107,11 @@ class DividoPayment extends Plugin
     }
 
     /**
-     * @param DeactivateContext $context
+     * Deactivating Plugin
+     *
+     * @param DeactivateContext $context Context
+     *
+     * @return void
      */
     public function deactivate(DeactivateContext $context)
     {
@@ -68,7 +119,11 @@ class DividoPayment extends Plugin
     }
 
     /**
-     * @param ActivateContext $context
+     * Activating Plugin context
+     *
+     * @param ActivateContext $context Context
+     *
+     * @return void
      */
     public function activate(ActivateContext $context)
     {
@@ -76,8 +131,12 @@ class DividoPayment extends Plugin
     }
 
     /**
-     * @param Payment[] $payments
-     * @param $active bool
+     * Set Active
+     *
+     * @param Payment[] $payments activate in payments
+     * @param bool      $active
+     *
+     * @return void
      */
     private function setActiveFlag($payments, $active)
     {
@@ -88,5 +147,4 @@ class DividoPayment extends Plugin
         }
         $em->flush();
     }
-
 }
