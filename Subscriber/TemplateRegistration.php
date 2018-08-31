@@ -71,6 +71,9 @@ class TemplateRegistration implements SubscriberInterface
         $apiKey = $config["Api Key"];
         $key = preg_split("/\./", $apiKey);
 
+        $min_product_amount = (isset($config['Minimum Amount'])) ? $config['Minimum Amount'] : 0;
+        $args->getSubject()->View()->assign('min_product_amount', $min_product_amount);
+
         if ($config['Small Price Widget']) {
             $this->templateManager->addTemplateDir($this->pluginDirectory . '/Resources/views');
             $args->getSubject()->View()->assign('apiKey', $key['0']);

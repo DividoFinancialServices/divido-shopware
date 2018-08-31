@@ -1,8 +1,9 @@
 {extends file="parent:frontend/detail/content/buy_container.tpl"}
 
-{block name="frontend_detail_index_buy_container_inner"}
+{block name="frontend_detail_index_buybox"}
 {$smarty.block.parent}
 
+{if {$sArticle.price|replace:',':'.'} >= $min_product_amount }
 <!-- BEGIN DIVIDO --!>
       <script> 
         var dividoKey = "{$apiKey}";
@@ -13,6 +14,9 @@
          position:relative;
          top:2px;
          } 
+         #divido-widget{
+           padding-bottom:5px;
+         }
        </style>
 
     <script src="https://cdn.divido.com/calculator/v2.1/production/js/template.divido.js"></script>
@@ -30,7 +34,7 @@
               >
             </div>
 <!-- END DIVIDO --!>
-    
+{/if}
 {/block}
 
 
