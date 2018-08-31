@@ -65,13 +65,11 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         self::STATUS_ACTION_LENDER => 'Lender notified',
         self::STATUS_CANCELED      => 'Application canceled',
         self::STATUS_COMPLETED     => 'Application completed',
-        self::STATUS_DEFERRED      =>
-        'Application deferred by Underwriter, waiting for new status',
+        self::STATUS_DEFERRED      => 'Application deferred by Underwriter, waiting for new status',
         self::STATUS_DECLINED      => 'Applicaiton declined by Underwriter',
         self::STATUS_DEPOSIT_PAID  => 'Deposit paid by customer',
         self::STATUS_FULFILLED     => 'Credit request fulfilled',
-        self::STATUS_REFERRED      =>
-        'Credit request referred by Underwriter, waiting for new status',
+        self::STATUS_REFERRED      => 'Credit request referred by Underwriter, waiting for new status',
         self::STATUS_SIGNED        => 'Customer have signed all contracts',
         self::STATUS_READY         => 'Order ready to Ship',
 

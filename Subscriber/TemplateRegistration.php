@@ -89,12 +89,4 @@ class TemplateRegistration implements SubscriberInterface
         }
         return;
     }
-
-
-    //remove
-    public function getDividoApiKey()
-    {
-        $service = $this->container->get('divido_payment.divido_payment_service');
-        return $service->getConfig();
-    }
 }
