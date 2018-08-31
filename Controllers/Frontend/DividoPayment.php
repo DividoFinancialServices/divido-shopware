@@ -1,12 +1,39 @@
 <?php
-
+/**
+ * Divido Payment Service - Webhook Response
+ *
+ * PHP version 5.5
+ *
+ * @category  CategoryName
+ * @package   DividoPayment
+ * @author    Original Author <jonthan.carter@divido.com>
+ * @author    Another Author <andrew.smith@divido.com>
+ * @copyright 2014-2018 Divido Financial Services
+ * @license   GNU General Public License family
+ * @link      http://github.com/DividoFinancialServices/divido-shopware
+ * @since     File available since Release 1.0.0
+ */
 use DividoPayment\Components\DividoPayment\DividoPaymentService;
 use Shopware\Components\CSRFWhitelistAware;
 
 //Include Divido PHP SDK
-require_once __DIR__ . '../../../lib/Divido.php'; 
+require_once __DIR__ . '../../../lib/Divido.php';
 
-class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_Frontend_Payment implements CSRFWhitelistAware
+/**
+ * Divido Payment Service - Webhook Response
+ *
+ * PHP version 5.5
+ *
+ * @category  CategoryName
+ * @package   DividoPayment
+ * @author    Original Author <jonthan.carter@divido.com>
+ * @author    Another Author <andrew.smith@divido.com>
+ * @copyright 2014-2018 Divido Financial Services
+ * @license   GNU General Public License family
+ * @link      http://github.com/DividoFinancialServices/divido-shopware
+ * @since     File available since Release 1.0.0
+ */
+class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_Frontend_Payment implements CSRFWhitelistAware //
 {
     const
         DIVIDO_PLUGIN_VERSION = "0.0.0.1",
@@ -29,27 +56,29 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
 
 
      /**
-      * Order History Mesaages 
+      * Order History Mesaages
       *
       * @var array
       */
-     public $historyMessages = array(
+    public $historyMessages = array(
         self::STATUS_ACCEPTED      => 'Credit request accepted',
         self::STATUS_ACTION_LENDER => 'Lender notified',
         self::STATUS_CANCELED      => 'Application canceled',
         self::STATUS_COMPLETED     => 'Application completed',
-        self::STATUS_DEFERRED      => 'Application deferred by Underwriter, waiting for new status',
+        self::STATUS_DEFERRED      =>
+        'Application deferred by Underwriter, waiting for new status',
         self::STATUS_DECLINED      => 'Applicaiton declined by Underwriter',
         self::STATUS_DEPOSIT_PAID  => 'Deposit paid by customer',
         self::STATUS_FULFILLED     => 'Credit request fulfilled',
-        self::STATUS_REFERRED      => 'Credit request referred by Underwriter, waiting for new status',
+        self::STATUS_REFERRED      =>
+        'Credit request referred by Underwriter, waiting for new status',
         self::STATUS_SIGNED        => 'Customer have signed all contracts',
         self::STATUS_READY         => 'Order ready to Ship',
 
     );
 
     /**
-     * getWhitelistedCSRFActions allows webhooks to reach server
+     * Allows webhooks to reach server
      *
      * @return void
      */
@@ -62,27 +91,34 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
     }
 
     /**
-     * preDispatch  method.
+     * Hooks into the pre dispatch method.
      *
+     * Look into this for more info
      * https://developers.shopware.com/developers-guide/event-guide/
+     *
+     * @return void
      */
     public function preDispatch()
     {
-       /**
+        /*
         * @var \Shopware\Components\Plugin $plugin 
         */
         $plugin = $this->get('kernel')->getPlugins()['DividoPayment'];
-        $this->get('template')->addTemplateDir($plugin->getPath() . '/Resources/views/');
+        $this->get('template')->addTemplateDir(
+            $plugin->getPath() . '/Resources/views/'
+        );
     }
 
     /**
      * Index action method.
      *
      * Forwards to the correct action.
+     *
+     * @return void
      */
     public function indexAction()
     {
-        $this->debug('Index view','info');
+        $this->debug('Index view', 'info');
         return $this->redirect(['action' => 'finance', 'forceSecure' => false]);
     }
 
@@ -92,10 +128,12 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      * Collects the payment information and transmits it to the payment provider.
      * See
      * http://developer.divido.com/#resources-credit-request
+     *
+     * @return void
      */
     public function directAction()
     {
-        $this->debug('Direct Action','info');
+        $this->debug('Direct Action', 'info');
 
         $service = $this->container->get('divido_payment.divido_payment_service');
         $router = $this->Front()->Router();
@@ -106,9 +144,12 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $details = $this->getOrderDetails($basket);
         $basketSignature = $this->persistBasket();
 
-        if($_POST['divido_deposit']) {
-            $deposit = $this->getDepositAmount($_POST['divido_deposit'], $details['amount']);
-        }else{
+        if ($_POST['divido_deposit']) {
+            $deposit = $this->getDepositAmount(
+                $_POST['divido_deposit'],
+                $details['amount']
+            );
+        } else {
             $deposit='';
         }
  
@@ -117,10 +158,19 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $apiKey = $config['Api Key'];
         $planId= $_POST['divido_plan'];
 
-        $response_url= $router->assemble(['action' => 'webhook', 'forceSecure' => true]);
-        $checkout_url= $router->assemble(['action' => 'cancel', 'forceSecure' => true]);
-        $redirect_url = $router->assemble(['action' => 'return', 'forceSecure' => true]);
-        $token = $service->createPaymentToken($this->getAmount(), $billing['customernumber']);
+        $response_url= $router->assemble(
+            ['action' => 'webhook', 'forceSecure' => true]
+        );
+        $checkout_url= $router->assemble(
+            ['action' => 'cancel', 'forceSecure' => true]
+        );
+        $redirect_url = $router->assemble(
+            ['action' => 'return', 'forceSecure' => true]
+        );
+        $token = $service->createPaymentToken(
+            $this->getAmount(),
+            $billing['customernumber']
+        );
 
         $requestData = [
             'merchant' => $apiKey,
@@ -137,7 +187,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             'redirect_url' => $redirect_url,
         ];
 
-       /*
+        /*
         if (! empty($sharedSecret)) {
             Divido::setSharedSecret($sharedSecret);
         }
@@ -145,37 +195,42 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $requestData = array_merge($customer, $details, $requestData);
         $response = \Divido_CreditRequest::create($requestData);
 
-        //persist basket if good create order 
+        //persist basket if good create order
         //return with basket if fails
         if ($response->status == 'ok') {
-
             //save order as processing
-             $this->saveOrder(
+            $this->saveOrder(
                 $response->id,
                 $token,
                 self::PAYMENTSTATUSOPEN
             );
 
-            $orderID = $this->_getOrderId($response->id);
-            $attributePersister = $this->container->get('shopware_attribute.data_persister');
+            $orderID = $this->getOrderId($response->id);
+            $attributePersister = $this->container->get(
+                'shopware_attribute.data_persister'
+            );
 
             $attributeData = array(
                 'divido_finance_id' => $planId,
                 'divido_deposit_value' => $deposit,
             );
 
-            $attributePersister->persist($attributeData, 's_order_attributes', $orderID);
+            $attributePersister->persist(
+                $attributeData,
+                's_order_attributes',
+                $orderID
+            );
 
             //save depost and finance plan as attribute
         } else {
-            if ($response->status === 'error') {    
+            if ($response->status === 'error') {
                 // Log the error
                 $this->forward('cancel');
             }
         }
 
         //Customer
-        //Redirect to returned application or if fail killit 
+        //Redirect to returned application or if fail killit
         $this->redirect($response->url);
     }
 
@@ -183,15 +238,17 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      * Finance Action Method
      *
      * Allows user to select finance before redirecting
+     *
+     * @return void
      */
     public function financeAction()
     {
-        $this->debug('Finance view','info');
+        $this->debug('Finance view', 'info');
         header('Access-Control-Allow-Origin: *');
         $basket = $this->getBasket();
         $products = $this->getOrderProducts($basket);
         $details = $this->getOrderDetails($basket);
-        $title = $this->getDividoTitle();   
+        $title = $this->getDividoTitle();
         $description = $this->getDividoDescription();
         $minCartAmount =$this->getDividoCartThreshold();
         $customer = $this->getCustomerDetailsFormatted();
@@ -200,27 +257,30 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $displayWarning='';
 
         $apiKey = $this->getDividoApiKey();
-        $key = preg_split("/\./",$apiKey);
+        $key = preg_split("/\./", $apiKey);
 
         $displayFinance = false;
       
-        if($details['amount'] >= $minCartAmount){
+        if ($details['amount'] >= $minCartAmount) {
             $displayFinance = true;
-        }else{
+        } else {
             $displayWarning=' Cart does not meet minimum Finance Requirement.';
         }
 
-        if($customer['address']!=$customer['shippingAddress']){
+        if ($customer['address']!=$customer['shippingAddress']) {
             $displayFinance = false;
-            $displayWarning =$displayWarning." Shipping and billing address must match.";
+            $displayWarning
+                = $displayWarning . " Shipping and billing address must match.";
         }
 
-        if($apiKey === ''){
+        if ($apiKey === '') {
             $displayFinance = false;
-            $displayWarning =$displayWarning." No Api Key Detected. Please contact the merchant.";
+            $displayWarning
+                = $displayWarning
+                    . " No Api Key Detected. Please contact the merchant.";
         }
 
-        if(!$displayFinance){
+        if (!$displayFinance) {
             $displayForm='style="display:none";';
         }
 
@@ -231,60 +291,60 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $this->View()->assign('suffix', '');
         $this->View()->assign('displayForm', $displayForm);
         $this->View()->assign('displayWarning', $displayWarning);
-
     }
 
     /**
      * Return action method
      *
      * Reads the transactionResult and represents it for the customer.
+     *
+     * @return void
      */
     public function returnAction()
     {
-        $this->debug('Return action','info');
-
+        $this->debug('Return action', 'info');
     }
 
     /**
      * Cancel action method
+     *
+     * @return void
      */
     public function cancelAction()
     {
     }
 
     /**
-     * webhookAction
-     * 
+     * Call back
+     *
      * A listener that can receive calls from Divido to update an order in shopware
-     * In the shopware documentation this webhook=notify 
+     * In the shopware documentation this webhook=notify
      *
      * @return void
      */
     public function webhookAction()
     {
-        $this->debug('Webhook','info');
+        $this->debug('Webhook', 'info');
 
-        /**
+        /*
          * @var DividoPaymentService $service 
          */
         $service = $this->container->get('divido_payment.divido_payment_service');
-        //get webhook
-        $response = $service->createWebhookResponse($this->Request());      
+        $response = $service->createWebhookResponse($this->Request());
             
         if (!$response->status) {
-            //Logging
-            $this->debug('No Response Status','error');
+            $this->debug('No Response Status', 'error');
             echo 'no response';
             die();
         }
 
         /***
          * HMAC SIGNING
-         * 
          */
         /*
         //Not working
-        if (isset($_SERVER['HTTP_RAW_POST_DATA']) && $_SERVER['HTTP_RAW_POST_DATA']) {
+        if (isset($_SERVER['HTTP_RAW_POST_DATA']) 
+            && $_SERVER['HTTP_RAW_POST_DATA']) {
             $this->debug('Raw Data :','info');
 
             $data = file_get_contents($_SERVER['HTTP_RAW_POST_DATA']);
@@ -330,92 +390,112 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         */
         /***
          * HMAC SIGNING
-         * 
          */
-
 
         $transactionId=$response->proposal;
         $paymentUniqueId=$response->token;
 
-        $this->debug('Webhook data:'.serialize($response),'error');
-        $this->debug('Webhook TransactionID:'.$transactionId,'info');
-        $this->debug('Webhook Unique Payment ID:'.$paymentUniqueId,'info');
+        $this->debug('Webhook data:'.serialize($response), 'error');
+        $this->debug('Webhook TransactionID:'.$transactionId, 'info');
+        $this->debug('Webhook Unique Payment ID:'.$paymentUniqueId, 'info');
         $message ='';
 
-        switch ($response->status) 
-        {
+        switch ($response->status) {
             case self::STATUS_PROPOSAL:
-                $this->debug('Webhook: Proposal','info');
+                $this->debug('Webhook: Proposal', 'info');
                 $message ='Proposal Hook Success';
-                $this->savePaymentStatus($transactionId, $paymentUniqueId, self::PAYMENTSTATUSOPEN);
+                $this->savePaymentStatus(
+                    $transactionId,
+                    $paymentUniqueId,
+                    self::PAYMENTSTATUSOPEN
+                );
                 break;
 
             case self::STATUS_ACCEPTED:
-                $this->debug('Webhook: Accepted','info');
+                $this->debug('Webhook: Accepted', 'info');
                 $message ='Accepted Hook Success';
-                $this->savePaymentStatus($transactionId, $paymentUniqueId, self::PAYMENTSTATUSOPEN);
+                $this->savePaymentStatus(
+                    $transactionId,
+                    $paymentUniqueId,
+                    self::PAYMENTSTATUSOPEN
+                );
                 break;
 
-            case  self::STATUS_SIGNED:
-                $this->debug('Webhook: Signed','info');
+            case self::STATUS_SIGNED:
+                $this->debug('Webhook: Signed', 'info');
                 $message ='Signed Hook Success';
-                $this->savePaymentStatus($transactionId, $paymentUniqueId, self::PAYMENTSTATUSPAID);    
+                $this->savePaymentStatus(
+                    $transactionId,
+                    $paymentUniqueId,
+                    self::PAYMENTSTATUSPAID
+                );
                 break;
 
-            case  self::STATUS_DECLINED:
-                $this->debug('Webhook: Declined','info');
+            case self::STATUS_DECLINED:
+                $this->debug('Webhook: Declined', 'info');
                 $message ='Declined Hook Success';
-                $this->savePaymentStatus($transactionId, $paymentUniqueId, self::PAYMENTREVIEWNEEDED);
+                $this->savePaymentStatus(
+                    $transactionId,
+                    $paymentUniqueId,
+                    self::PAYMENTREVIEWNEEDED
+                );
                 break;
 
-            case  self::STATUS_CANCELED:
-                $this->debug('Webhook: Canceled','info');
+            case self::STATUS_CANCELED:
+                $this->debug('Webhook: Canceled', 'info');
                 $message ='Canceled Hook Success';
-                $this->savePaymentStatus($transactionId, $paymentUniqueId, self::PAYMENTCANCELLED);
+                $this->savePaymentStatus(
+                    $transactionId,
+                    $paymentUniqueId,
+                    self::PAYMENTCANCELLED
+                );
                 break;
 
-            case  self::STATUS_DEPOSIT_PAID:
-                $this->debug('Webhook: Deposit Paid','info');
+            case self::STATUS_DEPOSIT_PAID:
+                $this->debug('Webhook: Deposit Paid', 'info');
                 $message ='Deposit Paid Hook Success';
-                $this->savePaymentStatus($transactionId, $paymentUniqueId, self::PAYMENTSTATUSOPEN);
+                $this->savePaymentStatus(
+                    $transactionId,
+                    $paymentUniqueId,
+                    self::PAYMENTSTATUSOPEN
+                );
                 break;
 
             case self::STATUS_ACTION_LENDER:
-                $this->debug('Webhook: Deposit Paid','info');
+                $this->debug('Webhook: Deposit Paid', 'info');
                 break;
             
             case self::STATUS_COMPLETED:
                 $message ='Completed';
-                $this->debug('Webhook: Completed','info');
+                $this->debug('Webhook: Completed', 'info');
                 break;
 
             case self::STATUS_DEFERRED:
                 $message ='Deferred Success';
-                $this->debug('Webhook: STATUS_DEFERRED','info');
+                $this->debug('Webhook: STATUS_DEFERRED', 'info');
                 break;
 
             case self::STATUS_FULFILLED:
                 $message ='STATUS_FULFILLED Success';
-                $this->debug('Webhook: STATUS_FULFILLED','info');
+                $this->debug('Webhook: STATUS_FULFILLED', 'info');
                 break;
 
             case self::STATUS_REFERRED:
                 $message ='Order Referred Success';
-                $this->debug('Webhook: Referred','info');
+                $this->debug('Webhook: Referred', 'info');
                 break;
 
             default:
                 $message ='Empty Hook';
-                $this->debug('Webhook: Empty webook','warning');
+                $this->debug('Webhook: Empty webook', 'warning');
                 break;
         }
 
             //update order based on whats sent through
-            //use signmature to determin if basket is set 
+            //use signmature to determin if basket is set
             //create order on signed
-            $this->respond(true, $message , false);
+            $this->respond(true, $message, false);
             return ;
-
     }
 
     /**
@@ -425,30 +505,34 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
     /**
      * Debug Helper
      *
-     * @param mixed $msg
-     * @param string $level
+     * @param mixed  $msg  A string with the message to debug.
+     * @param string $type PHP error level error warning.
+     *
      * @return void
      */
     public function debug($msg, $type = false)
     {
-        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('DividoPayment');
+        $config = $this->container->get('shopware.plugin.cached_config_reader')
+            ->getByPluginName('DividoPayment');
         $debug = $config['Debug'];
 
-        if (! $debug ) {
+        if (! $debug) {
             return;
         }
 
         $this->log($msg, $type);
-    }  
+    }
 
     /**
-     * log Helper
+     * Log Helper
      *
-     * @param mixed $msg
-     * @param string $level
+     * @param mixed  $msg  String to be passed
+     * @param string $type Type to be used
+     *
      * @return void
      */
-    public function log($msg, $type) {
+    public function log($msg, $type)
+    {
 
         switch ($type) {
             case 'warning':
@@ -472,17 +556,26 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
 
 
     /**
-	 * Create HMAC SIGNATURE
-	 */
-	public function createSignature ($payload, $sharedSecret) {
-        $signature = base64_encode(hash_hmac('sha256', $payload, $sharedSecret, true));
-	    return $signature;
-	}
+     * Create HMAC SIGNATURE
+     *
+     * @param string $payload      The payload for the signature
+     * @param string $sharedSecret The secret stored on divido portal
+     *
+     * @return $signature
+     */
+    public function createSignature($payload, $sharedSecret)
+    {
+        $signature = base64_encode(
+            hash_hmac('sha256', $payload, $sharedSecret, true)
+        );
+        return $signature;
+    }
 
     /**
      * Create customer details for divido credit request
+     *
+     * @return Array
      */
-
     public function getCustomerDetailsFormatted()
     {
 
@@ -511,42 +604,52 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         return $customerArray;
     }
 
+    /**
+     * Helper Function to transform shopware address array to divido format
+     *
+     * @param array $shopwareAddressArray shopware address
+     *
+     * @return array
+     */
     public function transformShopwareToDividoAddress($shopwareAddressArray)
     {
         $this->debug('Add array:'.serialize($shopwareAddressArray), 'info');
 
-        $addressText = $shopwareAddressArray['buildingNumber'] .' '. $shopwareAddressArray['street'] . ' ' . $shopwareAddressArray['city'] . ' ' . $shopwareAddressArray['zipcode']; 
+        $addressText = $shopwareAddressArray['buildingNumber'] .' '.
+         $shopwareAddressArray['street'] . ' ' .
+         $shopwareAddressArray['city'] . ' ' .
+         $shopwareAddressArray['zipcode'];
+         
         $dividoAddressArray = array();
         $dividoAddressArray['postcode']=$shopwareAddressArray['zipcode'];
         $dividoAddressArray['street']=$shopwareAddressArray['street'];
         $dividoAddressArray['flat']=$shopwareAddressArray['flat'];
-        $dividoAddressArray['buildingNumber']=$shopwareAddressArray['buildingNumber'];
+        $dividoAddressArray['buildingNumber']
+            = $shopwareAddressArray['buildingNumber'];
         $dividoAddressArray['buildingName']=$shopwareAddressArray['buildingName'];
         $dividoAddressArray['town']=$shopwareAddressArray['city'];
         $dividoAddressArray['text']=$addressText;
 
         return $dividoAddressArray;
-
     }
 
-     /**
-      * Create Order detail for divido credit request
-      */
+    /**
+     * Create order detail for divido credit request
+     *
+     * @param array $shopwareBasketArray The array from shopwares basket
+     *
+     * @return void
+     */
     public function getOrderProducts($shopwareBasketArray)
     {
         $dividoProductsArray = array();
-
-        //echo "<pre>";
-        //var_dump($shopwareBasketArray);
-        //echo "</pre>";
-
-            //Add tax
-            $dividoProductsArray['1']['name']='Shipping';
-            $dividoProductsArray['1']['quantity']='1';
-            $dividoProductsArray['1']['price']=$shopwareBasketArray['sShippingcosts'];
-            $i=2;
+        //Add tax
+        $dividoProductsArray['1']['name']='Shipping';
+        $dividoProductsArray['1']['quantity']='1';
+        $dividoProductsArray['1']['price']=$shopwareBasketArray['sShippingcosts'];
+        $i=2;
             
-        foreach($shopwareBasketArray['content'] as $id => $product){
+        foreach ($shopwareBasketArray['content'] as $id => $product) {
             $dividoProductsArray[$i]['name']     = $product['articlename'];
             $dividoProductsArray[$i]['quantity'] = $product['quantity'];
             $dividoProductsArray[$i]['price']    = $product['price'];
@@ -556,58 +659,109 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         return $dividoProductsArray;
     }
 
+    /**
+     * Helper function to grab data for credit request
+     *
+     * @param array $shopwareBasketArray passed in array
+     *
+     * @return void
+     */
     public function getOrderDetails($shopwareBasketArray)
     {
         $formattedArray = array();
         $formattedArray['currency']  = $this->getCurrencyShortName();
         $formattedArray['amount']    = $this->getAmount();
-        $formattedArray['reference'] = $this->getOrderNumber();  
+        $formattedArray['reference'] = $this->getOrderNumber();
         return $formattedArray;
     }
 
+    /**
+     * Work out the total deposit amount from  the percentage and round it
+     *
+     * @param float $total   total of the order
+     * @param float $deposit deposit amount
+     *
+     * @return float
+     */
     public function getDepositAmount($total, $deposit)
     {
         $depositPercentage = $deposit / 100;
         return round($depositPercentage * $total, 2);
     }
 
-    public function getDividoConfig(){
+    /**
+     * Helper to grab the plugin configuration
+     *
+     * @return array
+     */
+    public function getDividoConfig()
+    {
 
-        $config = $this->container->get('shopware.plugin.cached_config_reader')->getByPluginName('DividoPayment');
+        $config = $this->container
+            ->get('shopware.plugin.cached_config_reader')
+            ->getByPluginName('DividoPayment');
 
         return $config;
     }
 
+    /**
+     * Helper to grab api key
+     *
+     * @return string
+     */
     public function getDividoApiKey()
     {
         $config=$this->getDividoConfig();
         return $config['Api Key'];
     }
 
+    /**
+     * Helper to grab debug status
+     *
+     * @return bool
+     */
     public function getDividoDebug()
     {
         $config=$this->getDividoConfig();
         return $config['Debug'];
     }
 
+    /**
+     * Helper to grab checkout title
+     *
+     * @return string
+     */
     public function getDividoTitle()
     {
         $config=$this->getDividoConfig();
         return $config['Title'];
     }
 
+    /**
+     * Helper to grab description
+     *
+     * @return string
+     */
     public function getDividoDescription()
     {
         $config=$this->getDividoConfig();
         return $config['Description'];
     }
-
+    /**
+     * Helper to grab shared secret value
+     *
+     * @return string
+     */
     public function getDividoSharedSecret()
     {
         $config=$this->getDividoConfig();
         return $config['Shared Secret'];
     }
-
+    /**
+     * Helper to grab cart threshold value
+     *
+     * @return int
+     */
     public function getDividoCartThreshold()
     {
         $config=$this->getDividoConfig();
@@ -617,12 +771,13 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
     /**
      * Respond function
      *
-     * @param boolean $ok
-     * @param string $message
-     * @param boolean $bad_request
+     * @param boolean $ok          Good request
+     * @param string  $message     Message recieved
+     * @param boolean $bad_request bad request
+     *
      * @return void
      */
-    public function respond ($ok = true, $message = '', $bad_request = false)
+    public function respond($ok = true, $message = '', $bad_request = false)
     {
         
         Shopware()->Plugins()->Controller()->ViewRenderer()->setNoRender();
@@ -645,27 +800,34 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             'plugin_version'   => self::DIVIDO_PLUGIN_VERSION,
         );
 
-        $body = json_encode($response, JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+        $body = json_encode(
+            $response,
+            JSON_PRETTY_PRINT |
+            JSON_HEX_TAG |
+            JSON_HEX_APOS |
+            JSON_HEX_QUOT |
+            JSON_HEX_AMP
+        );
 
         $this->Response()->clearHeaders()
-        ->clearRawHeaders()
-        ->clearBody();
+            ->clearRawHeaders()
+            ->clearBody();
 
         $this->Response()->setBody($body);
         $this->Response()->setHeader('Content-type', 'application/json', true);
         $this->Response()->setHttpResponseCode($code);
         
         return $this->Response();
-
     }
 
     /**
      * Selects order id by transaction id.
      *
      * @param integer $transactionId corresponding transaction id
+     *
      * @return order id (integer)
      */
-    protected function _getOrderId($transactionId)
+    protected function getOrderId($transactionId)
     {
         $sql = 'SELECT id FROM s_order WHERE transactionID=?';
         $orderId = Shopware()->Db()->fetchOne($sql, array($transactionId));

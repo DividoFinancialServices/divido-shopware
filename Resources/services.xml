@@ -6,7 +6,6 @@
         <service id="divido_payment.divido_payment_service"
                  class="DividoPayment\Components\DividoPayment\DividoPaymentService">
         </service>
-
                 <!-- Register TemplateRegistration subscriber -->
         <service id="divido_payment.subscriber.template_registration" class="DividoPayment\Subscriber\TemplateRegistration">
             <argument>%divido_payment.plugin_dir%</argument>
