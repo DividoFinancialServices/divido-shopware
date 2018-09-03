@@ -25,29 +25,28 @@ class ModelSubscriber implements EventSubscriber
             ->getByPluginName('DividoPayment');
         $apiKey = $config["Api Key"];
         
-        $inserts = ["(?,?,?)"];
-        $values = ['1','All Plans', 'All Plans'];
-            
+        $inserts = ["(?,?)"];
+        $values = ['All Plans', 'All Plans'];
+        
         if(!empty($apiKey))
         {
             require_once(__DIR__.'../../lib/Divido.php');
-            Divido::setMerchant($apiKey);
-            $plans = \Divido_Finances::all(null,$apiKey);
-            if ($plans->status == 'ok') {
-                /*
-                foreach($plans as $plan)
-                {
-                    $inserts[] = "(?,?,?)";
-                    $values[] = $plan->id;
-                    $values[] = $plan->name;
-                    $values[] = $plan->name;
+            \Divido::setMerchant($apiKey);
+            $finances_call = \Divido_Finances::all(null, $apiKey);
+            
+            if($finances_call->status == 'ok'){
+                foreach($finances_call->finances as $option){
+                    if(in_array($option->id, $finance_list)){
+                        $inserts = ["(?,?)"];
+                        $values[] = $option->title;
+                        $values[] = $option->title;
+                    }
                 }
-                */
             }
         }
 
         Shopware()->Db()->query("TRUNCATE TABLE `s_plans`");
-        $sql = 'INSERT INTO s_plans (`id`,`name`,`description`) VALUES'.implode(",",$inserts);
+        $sql = 'INSERT INTO s_plans (`name`,`description`) VALUES'.implode(",",$inserts);
         $insert = Shopware()->Db()->query($sql, $values);
     }
 
