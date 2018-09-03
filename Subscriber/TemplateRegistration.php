@@ -74,6 +74,12 @@ class TemplateRegistration implements SubscriberInterface
         $min_product_amount = (isset($config['Minimum Amount'])) ? $config['Minimum Amount'] : 0;
         $args->getSubject()->View()->assign('min_product_amount', $min_product_amount);
 
+        $plans = $args->getSubject()->View()->sArticle->divido_finance_plans;
+        if($plans !== null){
+          $plans_string = str_replace("|",",",trim($plans,"|"));
+        }
+        $args->getSubject()->View()->assign('plans_list', $plans_string);
+
         if ($config['Small Price Widget']) {
             $this->templateManager->addTemplateDir($this->pluginDirectory . '/Resources/views');
             $args->getSubject()->View()->assign('apiKey', $key['0']);

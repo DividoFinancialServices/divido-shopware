@@ -128,7 +128,6 @@ class DividoPayment extends Plugin
         $service->delete('s_order_attributes', 'divido_deposit_value');
         $service->delete('s_articles_attributes', 'divido_finance_plans');
         $this->setActiveFlag($context->getPlugin()->getPayments(), false);
-        Shopware()->Db()->query("TRUNCATE TABLE `s_plans`");
     }
 
     /**
@@ -178,9 +177,6 @@ class DividoPayment extends Plugin
             ->getByPluginName('DividoPayment');
         $apiKey = $config["Api Key"];
         
-        $inserts[] = "(?,?)";
-        $values = ['All Plans', $apiKey];
-        
         if(!empty($apiKey))
         {
             require_once(__DIR__.'/lib/Divido.php');
@@ -188,15 +184,18 @@ class DividoPayment extends Plugin
             $finances_call = \Divido_Finances::all(null, $apiKey);
             if($finances_call->status == 'ok'){
                 foreach($finances_call->finances as $option){
-                    $inserts[] = "(?,?)";
-                    $values[] = $option->text;
+                    $inserts[] = "(?,?,?)";
                     $values[] = $option->id;
+                    $values[] = $option->text;
+                    $values[] = $option->text;
                 }
             }
         }
 
         Shopware()->Db()->query("TRUNCATE TABLE `s_plans`");
-        $sql = 'INSERT INTO s_plans (`name`, `description`) VALUES'.implode(",",$inserts);
-        $insert = Shopware()->Db()->query($sql, $values);
+        if(isset($inserts)){
+            $sql = 'INSERT INTO s_plans (`id`, `name`, `description`) VALUES'.implode(",",$inserts);
+            $insert = Shopware()->Db()->query($sql, $values);
+        }
     }
 }

@@ -13,7 +13,7 @@ class Plan
     /**
      * @var string $string
      *
-     * @ORM\Column(type="string", length=15 nullable=false)
+     * @ORM\Column(type="string", length=50, nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
