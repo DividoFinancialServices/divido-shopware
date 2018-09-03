@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cronjobs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/5.3/engine/Shopware/Components/Plugin/schema/cronjob.xsd">
+    <cronjob>
+        <name>Update Finance Plans</name>
+        <action>Shopware_Cronjob_UpdatePlans</action>
+        <active>false</active>
+        <interval>3600</interval>
+        <disableOnError>false</disableOnError>
+    </cronjob>
+</cronjobs>

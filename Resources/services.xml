@@ -12,5 +12,10 @@
             <argument type="service" id="template"/>
             <tag name="shopware.event_subscriber"/>
         </service>
+        <!--
+        <service id="divido_payment.subscriber.model_subscriber" class="DividoPayment\Subscriber\ModelSubscriber">
+            <tag name="doctrine.event_subscriber"/>
+        </service>
+        -->
     </services>
 </container>
