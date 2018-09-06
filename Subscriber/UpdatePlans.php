@@ -38,10 +38,6 @@ class UpdatePlans implements SubscriberInterface
         $request = $controller->Request();
         
         //$view->addTemplateDir($this->pluginDirectory . '/Resources/views');
-
-        if ($request->getActionName() == 'detail') {
-            //$this->set_plans();
-        }
         
         if ($request->getActionName() == 'index') {
             $this->set_plans();
