@@ -37,15 +37,8 @@ class UpdatePlans implements SubscriberInterface
         $view = $controller->View();
         $request = $controller->Request();
         
-        //$view->addTemplateDir($this->pluginDirectory . '/Resources/views');
-        
         if ($request->getActionName() == 'index') {
             $this->set_plans();
-            //$view->extendsTemplate('backend/divido_payment/app.js');
-        }
-        
-        if ($request->getActionName() == 'load') {
-            //$view->extendsTemplate('backend/divido_payment/view/detail/properties.js');
         }
         
     }
