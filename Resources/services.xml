@@ -3,26 +3,26 @@
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
-        
-        <service id="divido_payment.subscriber.templates" class="DividoPayment\Subscriber\ExtendCustomer">
+
+        <service id="divido_payment.subscriber.templates" class="DividoPayment\Subscriber\UpdatePlans">
             <argument>%divido_payment.plugin_dir%</argument>
             <tag name="shopware.event_subscriber"/>
         </service>
-        <!--
+        
         <service id="divido_payment.divido_payment_service"
                  class="DividoPayment\Components\DividoPayment\DividoPaymentService">
-        </service>-->
-                <!-- Register TemplateRegistration subscriber -->
-                <!--
+        </service>
+        <!-- Register TemplateRegistration subscriber -->
         <service id="divido_payment.subscriber.template_registration" class="DividoPayment\Subscriber\TemplateRegistration">
             <argument>%divido_payment.plugin_dir%</argument>
             <argument type="service" id="template"/>
             <tag name="shopware.event_subscriber"/>
         </service>
-        -->
+        <!--
         <service id="divido_payment.subscriber.model_subscriber" class="DividoPayment\Subscriber\ModelSubscriber">
+            <argument>%divido_payment.plugin_dir%</argument>
             <tag name="doctrine.event_subscriber"/>
         </service>
-        
+        -->
     </services>
 </container>

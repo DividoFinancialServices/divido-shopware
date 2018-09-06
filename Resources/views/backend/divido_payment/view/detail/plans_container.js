@@ -1,7 +1,7 @@
-Ext.define('Shopware.apps.DividoPayment.view.detail.MyOwnTab', {
+Ext.define('Shopware.apps.DividoPayment.view.detail.PlansContainer', {
     extend: 'Ext.container.Container',
     padding: 10,
-    title: 'MyOwnTab',
+    title: 'Plans',
 
     initComponent: function () {
         var me = this;

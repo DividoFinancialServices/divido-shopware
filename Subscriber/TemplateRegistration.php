@@ -74,9 +74,13 @@ class TemplateRegistration implements SubscriberInterface
         $min_product_amount = (isset($config['Minimum Amount'])) ? $config['Minimum Amount'] : 0;
         $args->getSubject()->View()->assign('min_product_amount', $min_product_amount);
 
-        $plans = $args->getSubject()->View()->sArticle->divido_finance_plans;
-        if($plans !== null){
-          $plans_string = str_replace("|",",",trim($plans,"|"));
+        $plans_string = $args->getSubject()->View()->sArticle->divido_finance_plans;
+        if($plans_string !== null && strpos("|",$plans_string) === 0){
+            $plans_array = explode("|", $plans_string);
+            array_walk(function($option){
+                if(!empty($option))$refined_plans_list[] = $option;
+            },$plans_array);
+          $plans_string = (isset($refined_plans_list)) ? implode(",",$refined_plans_list) : '';
         }
         $args->getSubject()->View()->assign('plans_list', $plans_string);
 

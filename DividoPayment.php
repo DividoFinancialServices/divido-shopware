@@ -110,8 +110,6 @@ class DividoPayment extends Plugin
         );
 
         $installer->createOrUpdate($context->getPlugin(), $options);
-
-        $this->fetchPlans();
     }
 
     /**
@@ -170,32 +168,5 @@ class DividoPayment extends Plugin
             $payment->setActive($active);
         }
         $em->flush();
-    }
-
-    private function fetchPlans(){
-        $config = Shopware()->Container()->get('shopware.plugin.cached_config_reader')
-            ->getByPluginName('DividoPayment');
-        $apiKey = $config["Api Key"];
-        
-        if(!empty($apiKey))
-        {
-            require_once(__DIR__.'/lib/Divido.php');
-            \Divido::setMerchant($apiKey);
-            $finances_call = \Divido_Finances::all(null, $apiKey);
-            if($finances_call->status == 'ok'){
-                foreach($finances_call->finances as $option){
-                    $inserts[] = "(?,?,?)";
-                    $values[] = $option->id;
-                    $values[] = $option->text;
-                    $values[] = $option->text;
-                }
-            }
-        }
-
-        Shopware()->Db()->query("TRUNCATE TABLE `s_plans`");
-        if(isset($inserts)){
-            $sql = 'INSERT INTO s_plans (`id`, `name`, `description`) VALUES'.implode(",",$inserts);
-            $insert = Shopware()->Db()->query($sql, $values);
-        }
     }
 }

@@ -1,9 +1,9 @@
-Ext.define('Shopware.apps.DividoPayment.controller.MyOwnController', {
+Ext.define('Shopware.apps.DividoPayment.controller.LocalController', {
     /**
      * Override the customer main controller
      * @string
      */
-    override: 'Shopware.apps.Customer.controller.Main',
+    override: 'Shopware.apps.Article.controller.Main',
 
     init: function () {
         var me = this;
