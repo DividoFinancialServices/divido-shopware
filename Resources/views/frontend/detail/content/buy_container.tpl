@@ -25,7 +25,7 @@
               data-divido-widget
               data-divido-mode="popup"
               data-divido-title-logo
-              data-divido-plans="{$plans_list}"
+              data-divido-plans="{$sArticle.divido_finance_plans|replace:'|':','}"
               {$prefix}
               {$suffix}
               data-divido-amount="{$sArticle.price|replace:',':'.'}
