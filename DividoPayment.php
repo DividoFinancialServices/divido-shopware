@@ -15,6 +15,7 @@
  */
 namespace DividoPayment;
 
+use Doctrine\ORM\Tools\SchemaTool;
 use Shopware\Components\Plugin;
 use Shopware\Components\Plugin\Context\ActivateContext;
 use Shopware\Components\Plugin\Context\DeactivateContext;
@@ -88,6 +89,26 @@ class DividoPayment extends Plugin
             ]
         );
 
+        $em = $this->container->get('models');
+        $schemaTool = new SchemaTool($em);
+        $schemaTool->updateSchema(
+            [ $em->getClassMetadata(\DividoPayment\Models\Plan::class) ],
+            true
+        );
+
+        $service->update(
+            's_articles_attributes',
+            'divido_finance_plans',
+            'multi_selection',
+            [
+                'entity' => \DividoPayment\Models\Plan::class,
+                'displayInBackend' => true,
+                'label' => 'Divido Finance Plans',
+                'supportText' => 'The plans available to the merchant',
+                'helpText' => 'Finance Plans'
+            ]
+        );
+
         $installer->createOrUpdate($context->getPlugin(), $options);
     }
 
@@ -103,6 +124,7 @@ class DividoPayment extends Plugin
         $service = $this->container->get('shopware_attribute.crud_service');
         $service->delete('s_order_attributes', 'divido_finance_id');
         $service->delete('s_order_attributes', 'divido_deposit_value');
+        $service->delete('s_articles_attributes', 'divido_finance_plans');
         $this->setActiveFlag($context->getPlugin()->getPayments(), false);
     }
 

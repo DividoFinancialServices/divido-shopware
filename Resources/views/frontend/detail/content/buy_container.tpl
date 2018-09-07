@@ -25,12 +25,12 @@
               data-divido-widget
               data-divido-mode="popup"
               data-divido-title-logo
+              data-divido-plans="{$sArticle.divido_finance_plans|replace:'|':','}"
               {$prefix}
               {$suffix}
               data-divido-amount="{$sArticle.price|replace:',':'.'}
               data-divido-apply="true"
               data-divido-apply-label="Apply Now"
-              data-divido-plans
               >
             </div>
 <!-- END DIVIDO --!>

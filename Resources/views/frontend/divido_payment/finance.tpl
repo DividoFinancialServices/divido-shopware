@@ -22,7 +22,7 @@
               data-divido-amount="{$amount}"
               data-divido-apply="true"
               data-divido-apply-label="Apply Now"
-              data-divido-plans
+              data-divido-plans="{$basket_plans}"
               >
             </div>
                     <button id="divido-finance-submit-button" type="submit"
