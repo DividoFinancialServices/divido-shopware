@@ -28,7 +28,7 @@
               data-divido-plans="{$sArticle.divido_finance_plans|replace:'|':','}"
               {$prefix}
               {$suffix}
-              data-divido-amount="{$sArticle.price|replace:',':'.'}
+              data-divido-amount="{$sArticle.price|replace:',':'.'}"
               data-divido-apply="true"
               data-divido-apply-label="Apply Now"
               >
