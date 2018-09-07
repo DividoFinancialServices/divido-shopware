@@ -258,6 +258,26 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $key = preg_split("/\./", $apiKey);
 
         $displayFinance = false;
+
+        $basket_plans = [];
+        foreach($products as $product){
+            if(isset($product['plans'])){
+                $product_plans = explode("|",$product['plans']);
+                if(empty($basket_plans)){
+                    foreach($product_plans as $plan){
+                        if(!empty($plan)) $basket_plans[] = $plan;
+                    }
+                }else{
+                    if(!empty($product_plans)){
+                        foreach($basket_plans as $k=>$listed){
+                            if(!in_array($listed,$product_plans)){
+                                unset($basket_plans[$k]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
       
         if ($details['amount'] >= $minCartAmount) {
             $displayFinance = true;
@@ -289,6 +309,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $this->View()->assign('suffix', '');
         $this->View()->assign('displayForm', $displayForm);
         $this->View()->assign('displayWarning', $displayWarning);
+        $this->View()->assign('basket_plans', implode(",",$basket_plans));
     }
 
     /**
@@ -651,6 +672,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             $dividoProductsArray[$i]['name']     = $product['articlename'];
             $dividoProductsArray[$i]['quantity'] = $product['quantity'];
             $dividoProductsArray[$i]['price']    = $product['price'];
+            $dividoProductsArray[$i]['plans']    = $product['additional_details']['attributes']['core']->get('divido_finance_plans');;
             $i++;
         }
 

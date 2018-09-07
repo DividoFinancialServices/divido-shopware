@@ -3,12 +3,13 @@
 namespace DividoPayment\Models;
 
 use Doctrine\ORM\Mapping as ORM;
+use Shopware\Components\Model\ModelEntity;
 
 /**
  * @ORM\Table(name="s_plans")
  * @ORM\Entity
  */
-class Plan
+class Plan extends ModelEntity
 {
     /**
      * @var string $string
@@ -35,7 +36,14 @@ class Plan
     private $description;
 
     /**
-     * @return int
+     * @var integer $updated_on
+     *
+     * @ORM\Column(type="integer", length=10, nullable=false)
+     */
+    private $updated_on;
+
+    /**
+     * @return string
      */
     public function getId()
     {
@@ -72,5 +80,21 @@ class Plan
     public function setDescription($description)
     {
         $this->description = $description;
+    }
+
+    /**
+     * @return int
+     */
+    public function getUpdatedOn()
+    {
+        return $this->updated_on;
+    }
+
+    /**
+     * @param int $updated_on
+     */
+    public function setUpdatedOn($updated_on)
+    {
+        $this->updated_on = $updated_on;
     }
 }

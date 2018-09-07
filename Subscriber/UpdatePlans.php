@@ -13,6 +13,12 @@ class UpdatePlans implements SubscriberInterface
     private $pluginDirectory;
 
     /**
+     * @var integer
+     * Duration (in milliseconds) before next plan request
+     */
+    const REFRESH_RATE = 7200; 
+
+    /**
      * @param $pluginDirectory
      */
     public function __construct($pluginDirectory)
@@ -37,15 +43,8 @@ class UpdatePlans implements SubscriberInterface
         $view = $controller->View();
         $request = $controller->Request();
         
-        //$view->addTemplateDir($this->pluginDirectory . '/Resources/views');
-        
         if ($request->getActionName() == 'index') {
             $this->set_plans();
-            //$view->extendsTemplate('backend/divido_payment/app.js');
-        }
-        
-        if ($request->getActionName() == 'load') {
-            //$view->extendsTemplate('backend/divido_payment/view/detail/properties.js');
         }
         
     }
@@ -57,20 +56,25 @@ class UpdatePlans implements SubscriberInterface
 
         if(!empty($apiKey))
         {
-            require_once($this->pluginDirectory.'/lib/Divido.php');
-            \Divido::setMerchant($apiKey);
-            $finances_call = \Divido_Finances::all(null, $apiKey);
-            if($finances_call->status == 'ok'){
-                foreach($finances_call->finances as $option){
-                    $inserts[] = "(?,?,?)";
-                    $values[] = $option->id;
-                    $values[] = $option->text;
-                    $values[] = $option->text;
-                }
-                if(isset($inserts)){
-                    Shopware()->Db()->query("TRUNCATE TABLE `s_plans`");
-                    $sql = 'INSERT INTO s_plans (`id`, `name`, `description`) VALUES'.implode(",",$inserts);
-                    Shopware()->Db()->query($sql, $values);
+            $now = time();
+            $recent_plan = Shopware()->Db()->query('SELECT `id` FROM `s_plans` WHERE `updated_on` > ? LIMIT 1',[$now - self::REFRESH_RATE]);
+            if(!$recent_plan){
+                require_once($this->pluginDirectory.'/lib/Divido.php');
+                \Divido::setMerchant($apiKey);
+                $finances_call = \Divido_Finances::all(null, $apiKey);
+                if($finances_call->status == 'ok'){
+                    foreach($finances_call->finances as $option){
+                        $inserts[] = "(?,?,?,?)";
+                        $values[] = $option->id;
+                        $values[] = $option->text;
+                        $values[] = $option->text;
+                        $values[] = $now;
+                    }
+                    if(isset($inserts)){
+                        Shopware()->Db()->query("TRUNCATE TABLE `s_plans`");
+                        $sql = 'INSERT INTO s_plans (`id`, `name`, `description`, `updated_on`) VALUES'.implode(",",$inserts);
+                        Shopware()->Db()->query($sql, $values);
+                    }
                 }
             }
         }
