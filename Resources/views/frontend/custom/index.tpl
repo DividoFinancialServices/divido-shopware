@@ -17,14 +17,8 @@
 
 <div id="calcWidget"
               data-divido-widget
-              data-divido-prefix="finance for"
-              data-divido-suffix="with"
               data-divido-title-logo
               data-divido-amount="2000"
-              data-divido-apply="true"
-              data-divido-apply-label="APPLY”
-              data-divido-footnote="If you apply"
-              data-divido-product="test"
               data-divido-plans
               data-divido-logo
               data-divido-mode="popup"
