@@ -25,7 +25,7 @@
 </div>
 {literal}
 <script>
-var dividoInputs = document.getElementsByClassName('divido-input');
+var dividoInputs = document.getElementsByClassName('divido-calculate');
 for(let k = 0; k < dividoInputs.length; k++){
     let dividoInput = dividoInputs[k];
     dividoInput.style.marginBottom = '40px';
