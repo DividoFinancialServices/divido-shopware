@@ -2,6 +2,7 @@
 
 {block name="frontend_index_content"}
 {$smarty.block.parent}
+{if $apiKey}
 <script>
     var dividoKey = "{$apiKey}";
 </script>
@@ -51,4 +52,5 @@ for(let k = 0; k < dividoInputs.length; k++){
 }
 </script>
 {/literal}
+{/if}
 {/block}
