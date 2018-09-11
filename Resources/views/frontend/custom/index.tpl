@@ -33,7 +33,7 @@
 <script>
 var dividoInputs = document.getElementsByClassName('divido-input');
 console.log(dividoInputs);
-for(let k = 0; k <= dividoInputs.length; k++){
+for(let k = 0; k < dividoInputs.length; k++){
     let dividoInput = dividoInputs[k];
     console.log(dividoInput);
     dividoInput
@@ -43,8 +43,8 @@ for(let k = 0; k <= dividoInputs.length; k++){
             let widget = document.getElementById('calcWidget');
             if(input >= 250 && input<=25000){
                 widget.setAttribute('data-divido-amount',input);
-                widget.style.left = (event.target.offsetLeft+15)+"px";
-                widget.style.top = (event.target.offsetHeight + event.target.offsetTop)+"px";
+                widget.style.left = (event.target.offsetLeft+12)+"px";
+                widget.style.top = (event.target.offsetHeight + event.target.offsetTop + 2)+"px";
                 widget.style.display = 'block';
             }else{
                 widget.style.display = 'none';
