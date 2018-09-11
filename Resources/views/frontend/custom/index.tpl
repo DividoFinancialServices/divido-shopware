@@ -7,39 +7,43 @@
     var dividoKey = "{$apiKey}";
 </script>
 <style>
-#calcWidget{
+.dividoCalcWidget{
     display:none;
-    position: absolute;
 }
 </style>
 <script src="http://cdn.divido.com/calculator/v2.1/production/js/template.divido.js"></script>
 
-<div id="calcWidget"
+<div class="dividoCalcWidget"
               data-divido-widget
               data-divido-title-logo
               data-divido-amount="2000"
               data-divido-plans
               data-divido-logo
-              data-divido-mode="popup"
+              data-divido-mode
               >
 </div>
 {literal}
 <script>
+var mainCalcWidget = document.getElementsByClassName('dividoCalcWidget')[0];
 var dividoInputs = document.getElementsByClassName('divido-calculate');
 for(let k = 0; k < dividoInputs.length; k++){
     let dividoInput = dividoInputs[k];
-    dividoInput.style.marginBottom = '40px';
+    var calcWidget = mainCalcWidget//.cloneNode(true);
+    calcWidget.style.display = 'block';
+    dividoInput.parentNode.insertBefore(calcWidget,dividoInput.nextSibling);
+    dividoInput.value = calcWidget.getAttribute('data-divido-amount');
+    if(dividoInput.classList.contains('divido-popup')){
+        calcWidget.setAttribute('data-divido-mode','popup');
+        calcWidget.style.marginLeft = '50px';
+    }
     dividoInput
         .addEventListener("keyup",function(event){
             let input = event.target.value;
-            let widget = document.getElementById('calcWidget');
             if(input >= 250 && input<=25000){
-                widget.setAttribute('data-divido-amount',input);
-                widget.style.top = (event.target.offsetHeight + event.target.offsetTop + 2)+"px";
-                widget.style.display = 'inline-block';
-                widget.style.left = (event.target.offsetLeft + (event.target.offsetWidth - widget.offsetWidth - 10))+"px";
-            }else{
-                widget.style.display = 'none';
+                calcWidget.setAttribute('data-divido-amount',input);
+                calcWidget.style.display = 'block';
+            }else {
+                calcWidget.style.display = 'none';
             }
         });
 }
