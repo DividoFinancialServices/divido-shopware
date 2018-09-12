@@ -27,6 +27,28 @@ Login to your shopware backend, and open the plugin manager.
 14. To clear the cache go to Configuration > Cache/Performance 
 #![Step 11-14](https://s3-eu-west-1.amazonaws.com/content.divido.com/images/documentation/shopware/Step11-14.png)
 
+## Custom Finance Calculator
+
+Version 0.3.0.0 brings about new added flexibility to incorporate Divido widgets into your custom pages. By following the instructions below you can generate one of two types of finance calculator, which will update automatically based on the figure entered into a text box.
+
+1. Enter the Backend of your online shop
+![Step 1](https://s3-eu-west-1.amazonaws.com/content.divido.com/images/documentation/shopware/embedded-calculator/1.png)
+2. Go to the "Shop pages" subsection of the "Content" section
+![Step 2](https://s3-eu-west-1.amazonaws.com/content.divido.com/images/documentation/shopware/embedded-calculator/2.png)
+3. Select the directory and the page you would like to edit / add a new page to the shop
+4. Click on the HTML Source Editor button in the text editor
+5. Insert the html for an input field, including the class name ‘divido-calculate’ (ie. <input type=“number” class=“divido-calculate” />). This will generate the block version of the widget (fig.9)
+![Steps 3-8](https://s3-eu-west-1.amazonaws.com/content.divido.com/images/documentation/shopware/embedded-calculator/3-8.png)
+6. If you wish to use a pop-up version of the widget (fig.10), include the class ‘divido-popup’ also (ie. <input type=“number” class=“divido-calculate divido-popup” />)
+![Step 6](https://s3-eu-west-1.amazonaws.com/content.divido.com/images/documentation/shopware/embedded-calculator/6.png)
+7. Click on the Update button in the HTML Source Editor window
+8. Click on the Save button on the Shop pages page
+9. The block payment calculator widget will generate directly below the input box
+![Step 9](https://s3-eu-west-1.amazonaws.com/content.divido.com/images/documentation/shopware/embedded-calculator/9.png)
+10. If you have chosen the popup option (as outlined in point 6), a small area of text will be generated underneath the input box which can be clicked on to obtain the full list of payment options available to the customer
+![Step 10](https://s3-eu-west-1.amazonaws.com/content.divido.com/images/documentation/shopware/embedded-calculator/10.png)
+
+Please be aware that may experience technical issues if you try to create more than one finance calculator on a page.
 
 ## Support
 
