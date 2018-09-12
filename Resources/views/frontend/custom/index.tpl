@@ -28,7 +28,8 @@ var mainCalcWidget = document.getElementsByClassName('dividoCalcWidget')[0];
 var dividoInputs = document.getElementsByClassName('divido-calculate');
 for(let k = 0; k < dividoInputs.length; k++){
     let dividoInput = dividoInputs[k];
-    var calcWidget = mainCalcWidget//.cloneNode(true);
+    var calcWidget = mainCalcWidget.cloneNode(true);
+    calcWidget.setAttribute('id','dividoCalc'+k);
     calcWidget.style.display = 'block';
     dividoInput.parentNode.insertBefore(calcWidget,dividoInput.nextSibling);
     dividoInput.value = calcWidget.getAttribute('data-divido-amount');
