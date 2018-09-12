@@ -140,7 +140,6 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $basket = $this->getBasket();
         $products = $this->getOrderProducts($basket);
         $details = $this->getOrderDetails($basket);
-        $basketSignature = $this->persistBasket();
 
         if ($_POST['divido_deposit']) {
             $deposit = $this->getDepositAmount(
