@@ -181,14 +181,9 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             ],
             'products'     => $products,
             'response_url' => $response_url,
-            'redirect_url' => $redirect_url,
+            'redirect_url' => $redirect_url."?session_id=".Shopware()->Session()->sessionId,
         ];
-
-        /*
-        if (! empty($sharedSecret)) {
-            Divido::setSharedSecret($sharedSecret);
-        }
-        */
+        
         $requestData = array_merge($customer, $details, $requestData);
         $response = \Divido_CreditRequest::create($requestData);
 
@@ -225,7 +220,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                 $this->forward('cancel');
             }
         }
-
+        session_write_close();
         //Customer
         //Redirect to returned application or if fail killit
         $this->redirect($response->url);
@@ -320,6 +315,44 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      */
     public function returnAction()
     {
+        //Create order
+        if($_GET['session_id']){
+            $session_id = filter_var($_GET['session_id'],FILTER_SANITIZE_STRING);
+            
+            $session_sql = "SELECT `data`  FROM `s_core_sessions` WHERE `id`=?";
+            $data_column = Shopware()->Db()->fetchOne($sql,[$session_id]);
+            if($data_column){
+                list($prefix,$data) = explode("|",$data_column);
+                $data = unserialize($data);
+                var_dump($data['sOrderVariables']);
+                $order = Shopware()->Db()->fetchAll("SELECT * FROM `s_order` WHERE `ordernumber`=? LIMIT 1",[$data['sOrderVariables']['sOrderNumber']]);
+                var_dump($order);
+                $order_cleared = $order[0]['cleared'];
+                
+                switch($order_cleared){
+                    case self::PAYMENTSTATUSOPEN:
+                        foreach($data['sOrderVariables'] as $key=>$value){
+                            $this->View()->assign($key,$value);
+                        }
+                        $addresses['billing'] = $data['sOrderVariables']['sUserData']['billingaddress'];
+                        $addresses['shipping'] = $data['sOrderVariables']['sUserData']['shippingaddress'];
+                        $addresses['equal'] = ($data['sOrderVariables']['sUserData']['billingaddress'] == $data['sOrderVariables']['sUserData']['shippingaddress']);
+                        $this->View()->assign('sAddresses', $addresses);
+                        $this->View()->assign('template', 'frontend/divido_payment/success.tpl');
+                        break;
+                    case self::PAYMENTCANCELLED:
+                        $session = Shopware()->Db()->fetchOne($session_sql,Shopware()->Session()->sessionId);
+                        //$this->forward('cancel');
+                        $this->View()->assign('template', 'frontend/divido_payment/cancel.tpl');
+                    default:
+                        $this->View()->assign('template', 'frontend/divido_payment/404.tpl');
+                        break;
+                }
+            }else{
+                $this->View()->assign('template', 'frontend/divido_payment/404.tpl');
+            }
+        }
+        
         $this->debug('Return action', 'info');
     }
 
