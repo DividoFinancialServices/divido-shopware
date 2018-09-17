@@ -92,7 +92,7 @@ class DividoPayment extends Plugin
         $em = $this->container->get('models');
         $schemaTool = new SchemaTool($em);
         $schemaTool->updateSchema(
-            [ $em->getClassMetadata(\DividoPayment\Models\Plan::class) ],
+            [ $em->getClassMetadata(\DividoPayment\Models\Plan::class), $em->getClassMetadata(\DividoPayment\Models\DividoSession::class) ],
             true
         );
 

@@ -168,7 +168,31 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             $this->getAmount(),
             $billing['customernumber']
         );
-
+        
+        $now = time();
+        $order_number = $this->getOrderNumber();
+        $query_builder = $this->container->get('dbal_connection')->createQueryBuilder();
+        
+        $query_builder
+            ->insert('s_divido_sessions')
+            ->values(
+                [
+                    'orderID'    => '?',
+                    'data'       => '?',
+                    'ip_address' => '?',
+                    'created_on' => '?'
+                ]
+            )
+            ->setParameter(0,$order_number)
+            ->setParameter(1,serialize(Shopware()->Session()->sOrderVariables))
+            ->setParameter(2,$_SERVER['REMOTE_ADDR'])
+            ->setParameter(3,$now);
+        $query = $query_builder->executeUpdate();
+        
+        var_dump($query_builder->lastInsertId());
+        
+        die();
+        
         $requestData = [
             'merchant' => $apiKey,
             'deposit'  => $deposit,
@@ -181,7 +205,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             ],
             'products'     => $products,
             'response_url' => $response_url,
-            'redirect_url' => $redirect_url."?session_id=".Shopware()->Session()->sessionId,
+            'redirect_url' => $redirect_url."?sid=1",
         ];
         
         $requestData = array_merge($customer, $details, $requestData);
@@ -220,6 +244,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                 $this->forward('cancel');
             }
         }
+
         session_write_close();
         //Customer
         //Redirect to returned application or if fail killit
@@ -344,6 +369,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                         $session = Shopware()->Db()->fetchOne($session_sql,Shopware()->Session()->sessionId);
                         //$this->forward('cancel');
                         $this->View()->assign('template', 'frontend/divido_payment/cancel.tpl');
+                        break;
                     default:
                         $this->View()->assign('template', 'frontend/divido_payment/404.tpl');
                         break;
