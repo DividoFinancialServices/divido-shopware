@@ -196,29 +196,10 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         //return with basket if fails
         if ($response->status == 'ok') {
             //save order as processing
-            $this->saveOrder(
-                $response->id,
-                $token,
-                self::PAYMENTSTATUSOPEN
-            );
-
-            $orderID = $this->getOrderId($response->id);
-            $attributePersister = $this->container->get(
-                'shopware_attribute.data_persister'
-            );
-
-            $attributeData = array(
-                'divido_finance_id' => $planId,
-                'divido_deposit_value' => $deposit,
-            );
-
-            $attributePersister->persist(
-                $attributeData,
-                's_order_attributes',
-                $orderID
-            );
-
-            //save depost and finance plan as attribute
+            
+            $parameters = $this->getUrlParameters();
+            
+            $this->redirect($response->url.$parameters);
         } else {
             if ($response->status === 'error') {
                 // Log the error
@@ -228,7 +209,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
 
         //Customer
         //Redirect to returned application or if fail killit
-        $this->redirect($response->url);
+        
     }
 
     /**
@@ -320,6 +301,44 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      */
     public function returnAction()
     {
+        /** @var ExamplePaymentService $service */
+        $service = $this->container->get('divido_payment.divido_payment_service');
+        $user = $this->getUser();
+        $billing = $user['billingaddress'];
+        /** @var PaymentResponse $response */
+        $response = $service->createPaymentResponse($this->Request());
+        $token = $service->createPaymentToken($this->getAmount(), $billing['customernumber']);
+        /*
+        $signature = $response->signature;
+        
+        try{
+            $basket = $this->loadBasketFromSignature($signature);
+            $this->verifyBasketSignature($signature, $basket);
+            $verified = true;
+        }catch(Exception $e){
+            $verified = false;
+        }
+        */
+
+        if (!$service->isValidToken($response, $token)) {
+            $this->forward('cancel');
+            return;
+        }
+        var_dump($basket);
+        switch ($response->status) {
+            case self::STATUS_ACCEPTED:
+                $this->saveOrder(
+                    $response->transactionId,
+                    $response->token,
+                    self::PAYMENTSTATUSPAID
+                );
+                $this->redirect(['controller' => 'checkout', 'action' => 'finish']);
+                break;
+            default:
+                $this->forward('cancel');
+                break;
+        }
+        
         $this->debug('Return action', 'info');
     }
 
@@ -851,5 +870,26 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $sql = 'SELECT id FROM s_order WHERE transactionID=?';
         $orderId = Shopware()->Db()->fetchOne($sql, array($transactionId));
         return $orderId;
+    }
+
+    protected function getUrlParameters(){
+        /** @var ExamplePaymentService $service */
+        $service = $this->container->get('divido_payment.divido_payment_service');
+        $router = $this->Front()->Router();
+        $user = $this->getUser();
+        $billing = $user['billingaddress'];
+
+        $parameter = [
+            'amount' => $this->getAmount(),
+            'currency' => $this->getCurrencyShortName(),
+            'firstName' => $billing['firstname'],
+            'lastName' => $billing['lastname'],
+            'returnUrl' => $router->assemble(['action' => 'return', 'forceSecure' => true]),
+            'cancelUrl' => $router->assemble(['action' => 'cancel', 'forceSecure' => true]),
+            'token' => $service->createPaymentToken($this->getAmount(), $billing['customernumber'])
+        ];
+
+        return '?' . http_build_query($parameter);
+
     }
 }
