@@ -12,7 +12,7 @@ use Shopware\Components\Model\ModelEntity;
 class Plan extends ModelEntity
 {
     /**
-     * @var string $string
+     * @var string $id
      *
      * @ORM\Column(type="string", length=50, nullable=false)
      * @ORM\Id
