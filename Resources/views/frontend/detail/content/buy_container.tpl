@@ -4,7 +4,7 @@
 {$smarty.block.parent}
 
 {if {$sArticle.price|replace:',':'.'} >= $min_product_amount }
-<!-- BEGIN DIVIDO --!>
+<!-- BEGIN DIVIDO -->
       <script> 
         var dividoKey = "{$apiKey}";
       </script>
@@ -33,7 +33,7 @@
               data-divido-apply-label="Apply Now"
               >
             </div>
-<!-- END DIVIDO --!>
+<!-- END DIVIDO -->
 {/if}
 {/block}
 
