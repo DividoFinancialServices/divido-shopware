@@ -326,7 +326,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                 = $displayWarning . " Shipping and billing address must match.";
         }
 
-        if ($apiKey === '') {
+        if (empty($apiKey)) {
             $displayFinance = false;
             $displayWarning
                 = $displayWarning
