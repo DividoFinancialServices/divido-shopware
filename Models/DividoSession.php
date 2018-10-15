@@ -28,9 +28,9 @@ class DividoSession extends ModelEntity
     private $orderNumber;
 
     /**
-     * @var integer $stransactionID
+     * @var string $transactionID
      *
-     * @ORM\Column(type="integer", length=10, nullable=true)
+     * @ORM\Column(type="text", length=40, nullable=true)
      */
     private $transactionID;
 
@@ -87,7 +87,7 @@ class DividoSession extends ModelEntity
     }
 
     /**
-     * @return int
+     * @return string
      */
     public function getTransactionID()
     {
@@ -95,7 +95,7 @@ class DividoSession extends ModelEntity
     }
 
     /**
-     * @param int $orderNumber
+     * @param string $transactionID
      */
     public function setTransactionID($transactionID)
     {

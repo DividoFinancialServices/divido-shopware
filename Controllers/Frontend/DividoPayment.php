@@ -76,6 +76,18 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
     );
 
     /**
+     * Array of the keys of fields we want to retain in the divido session table in case the session times out
+     * before the customer completes the signing process
+     */
+    private $retained = array(
+        'sUserData',
+        'sBasket',
+        'sAmount',
+        'sPayment',
+        'sDispatch'
+    );
+
+    /**
      * Allows webhooks to reach server
      *
      * @return void
@@ -132,12 +144,13 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
     public function directAction()
     {
         $this->debug('Direct Action', 'info');
-
+        
         $service = $this->container->get('divido_payment.divido_payment_service');
         $router = $this->Front()->Router();
         $apiKey = $this->getDividoApiKey();
         $customer = $this->getCustomerDetailsFormatted();
         $basket = $this->getBasket();
+        $user = $this->getUser();
         $products = $this->getOrderProducts($basket);
         $details = $this->getOrderDetails($basket);
 
@@ -166,39 +179,34 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         );
         $token = $service->createPaymentToken(
             $this->getAmount(),
-            $billing['customernumber']
+            $user['additional']['user']['customernumber']
         );
         
         $now = time();
 
         $session_data = Shopware()->Session()->sOrderVariables;
+        $data = [];
+        foreach($this->retained as $key){
+            $data[$key] = $session_data[$key];
+        }
 
         $add_session_query = $this->container->get('dbal_connection')->createQueryBuilder();
         $add_session_query
             ->insert('s_divido_sessions')
-            ->values(
-                [
-                    'orderNumber'   =>  '?',
-                    'transactionID' =>  '?',
-                    'key'           =>  '?',
-                    'data'          =>  '?',
-                    'ip_address'    =>  '?',
-                    'created_on'    =>  '?'
-                ]
-            )
-            ->setParameter(0,null)
-            ->setParameter(1,null)
-            ->setParameter(2,$token)
-            ->setParameter(3,serialize($session_data))
-            ->setParameter(4,$_SERVER['REMOTE_ADDR'])
-            ->setParameter(5,$now);
+            ->setValue('`key`','?')
+            ->setValue('`data`','?')
+            ->setValue('`ip_address`','?')
+            ->setValue('`created_on`','?')
+            ->setParameter(0,$token)
+            ->setParameter(1,serialize($data))
+            ->setParameter(2,$_SERVER['REMOTE_ADDR'])
+            ->setParameter(3,$now);
+        
         $add_session_query->execute();
         
         $dsid = $this->container->get('dbal_connection')->lastInsertId();
-        echo($dsid);
-        die();
-
-        $requestData = [
+        
+        $request_data = [
             'merchant' => $apiKey,
             'deposit'  => $deposit,
             'finance'  => $planId,
@@ -212,40 +220,34 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             'redirect_url' => $redirect_url."?dsid=".$dsid."&token=".$token,
         ];
         
-        $requestData = array_merge($customer, $details, $requestData);
-        $response = \Divido_CreditRequest::create($requestData);
+        $request_data = array_merge($customer, $details, $request_data);
+
+        $response = \Divido_CreditRequest::create($request_data);
 
         //persist basket if good create order
         //return with basket if fails
         if ($response->status == 'ok') {
-            //save order as processing
+            $query_builder = $this->container->get('dbal_connection')->createQueryBuilder();
+            $query_builder
+                ->update('`s_divido_sessions`')
+                ->set('`transactionID`', '?')
+                ->where('`id` = ?')
+                ->setParameter(0, $response->id)
+                ->setParameter(1, $dsid);
+            
+            $query_builder->execute();
+            
             $this->redirect($response->url);
         } else {
             if ($response->status === 'error') {
                 // Log the error
                 $this->forward('cancel');
             }
+            $this->forward('cancel');
         }
-        
-        if($divido_session['orderID'] === null){
-            $order_number = $this->getOrderNumber();
-            $this->removeDividoSessionsByOrderNumber($order_number);
-            $query_builder = $this->container->get('dbal_connection')->createQueryBuilder();
-            $query_builder
-                ->update('s_divido_sessions')
-                ->set('orderNumber', '?')
-                ->set('transactionID', '?')
-                ->where('id','?')
-                ->setParameter(0, $order_number)
-                ->setParameter(1, $response->id)
-                ->setParameter(2, $dsid);
-            $query_builder->execute();
-        }
-
         //session_write_close();
         //Customer
         //Redirect to returned application or if fail killit
-        
     }
 
     /**
@@ -331,61 +333,75 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
     /**
      * Return action method
      *
-     * Reads the transactionResult and represents it for the customer.
+     * Gets the PaymentResponse,
+     * Fetches the corresponding session,
+     * Checks to see if the response token is valid for the session
+     * Checks to see if the order is already complete
+     * Completes the order or displays the completed order
+     * or returns an appropriate response on failure
      *
      * @return void
      */
     public function returnAction()
     {
-        //Create order
-        
+        /*
+        /   Close any open session, in case we create an order with the same
+        /   session ID as the order we're currently closing
+        */
+        session_write_close();
+
         $service = $this->container->get('divido_payment.divido_payment_service');
         
-        /** @var PaymentResponse $response */
+        /** @var DividoPayment\Components\PaymentResponse $response */
         $response = $service->createPaymentResponse($this->Request());
-        $token = $response->token;
 
-        if(isset($response->dsid)){
-            $session_id = filter_var($response->dsid,FILTER_SANITIZE_STRING);
+        if(isset($response->sessionId) && isset($response->token)){
+            $session_id = filter_var($response->sessionId,FILTER_SANITIZE_NUMBER_INT);
             
-            $session_sql = "SELECT `ordernumber`,`data` FROM `s_divido_sessions` WHERE `id`=? LIMIT 1";
+            $session_sql = "SELECT * FROM `s_divido_sessions` WHERE `id`=? LIMIT 1";
             $session = Shopware()->Db()->fetchRow($session_sql,[$session_id]);
             
             if($session){
-                $data = unserialize($session['data']);
-                $order_sql = "SELECT * FROM `s_order` WHERE `ordernumber`=? LIMIT 1";
-                $order = Shopware()->Db()->fetchRow($order_sql, [$session['orderNumber']]);
-                var_dump($data);
-                die();
-                if($order){
-                    if (!$service->isValidToken($amount, $customer_id, $token)) {
-                        $order['cleared'] = self::PAYMENTCANCELLED;
-                    }$order['cleared'] = self::PAYMENTSTATUSOPEN;
-
-                    switch($order['cleared']){
-                        case self::PAYMENTSTATUSOPEN:
-                            foreach($data as $key=>$value){
-                                $this->View()->assign($key,$value);
-                            }
-                            $addresses['billing'] = $data['sUserData']['billingaddress'];
-                            $addresses['shipping'] = $data['sUserData']['shippingaddress'];
-                            $addresses['equal'] = 
-                                ($data['sUserData']['billingaddress'] == $data['sUserData']['shippingaddress']);
-                            $this->View()->assign('sAddresses', $addresses);
-                            $this->View()->assign('template', 'frontend/divido_payment/success.tpl');
-                            $this->removeDividoSessionById($session_id);
-                            break;
-                        case self::PAYMENTCANCELLED:
-                            //$this->forward('cancel');
-                            $this->View()->assign('template', 'frontend/divido_payment/cancel.tpl');
-                            $this->removeDividoSessionById($session_id);
-                            break;
-                        default:
-                            $this->View()->assign('template', 'frontend/divido_payment/404.tpl');
-                            break;
+                $order = unserialize($session['data']);
+                
+                $customer_number = $order['sUserData']['additional']['user']['customernumber'];
+                $amount = $order['sBasket']['sAmount'];
+                /*
+                /   If response token matches the information in the divido session 
+                /   $service = /Components/DividoPayment/DividoPaymentService.php 
+                */
+                if ($service->isValidToken($amount, $customer_number, $response->token)) {
+                    // If we haven't already generated the order already:
+                    if(is_null($session['orderNumber'])){
+                        $order['cleared'] = self::PAYMENTSTATUSOPEN;
+                        $order['id'] = $this->createOrder($session['transactionID'], $order);
+                        
+                        if($order['id']){
+                            // Update the divido session so that this only gets run once
+                            $query_builder = $this->container->get('dbal_connection')->createQueryBuilder();
+                            $query_builder
+                                ->update('`s_divido_sessions`')
+                                ->set('`orderNumber`', '?')
+                                ->where('`id` = ?')
+                                ->setParameter(0, $order['id'])
+                                ->setParameter(1, $session_id);
+                            $query_builder->execute();
+                        }else{
+                            $this->View()->assign('error', 'Could not create order');
+                            $this->View()->assign('template', 'frontend/divido_payment/error.tpl');
+                        }
+                    }else{
+                        $order['id'] = $session['orderNumber'];
                     }
+
+                    /*
+                    /   Assign the relevant stored session information to the appropriate Smarty variables
+                    */
+                    $this->sendOrdertoSmarty($order);
+                    $this->View()->assign('template', 'frontend/divido_payment/success.tpl');
                 }else{
-                    $this->View()->assign('template', 'frontend/divido_payment/404.tpl');
+                    $this->View()->assign('error', 'Invalid token.');
+                    $this->View()->assign('template', 'frontend/divido_payment/error.tpl');
                 }
             }else{
                 $this->View()->assign('template', 'frontend/divido_payment/404.tpl');
@@ -944,7 +960,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
 
         return '?' . http_build_query($parameter);
     }
-    
+
     /**
      * Removes Divido session based on id.
      *
@@ -969,5 +985,60 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $session_delete_sql = "DELETE FROM `s_divido_sessions` WHERE `orderID`=? LIMIT 1";
         $success = Shopware()->Db()->query($session_delete_sql, [$orderNumber]);
         return $success;
+    }
+
+    /**
+     * Generate an order based on the session data stored in the s_divido_sessions table
+     * 
+     * @param string $transactionId The ID generated when making a Divido Credit Request
+     * @param array $session The session information stored in `s_divido_sessions` table `data` column
+     * 
+     * @return orderNumber (string) The ID of the new Order  stored in s_order
+     */
+    protected function createOrder($transactionId, $session){
+        $basket = $session['sBasket'];
+        $order = Shopware()->Modules()->Order();
+        $order->sUserData = $session['sUserData'];
+        $order->sComment = "";
+        $order->sBasketData = $basket;
+        $order->sAmount = $session['sAmount'];
+        $order->sAmountWithTax = 
+            !empty($basket['AmountWithTaxNumeric']) ? $basket['AmountWithTaxNumeric'] : $basket['AmountNumeric'];
+        $order->sAmountNet = $basket['AmountNetNumeric'];
+        $order->sShippingcosts = $basket['sShippingcosts'];
+        $order->sShippingcostsNumeric = $basket['sShippingcostsWithTax'];
+        $order->sShippingcostsNumericNet = $basket['sShippingcostsNet'];
+        $order->bookingId = $transactionId;
+        $order->dispatchId = Shopware()->Session()->sDispatch;
+        $order->sNet = empty($user['additional']['charge_vat']);
+        $order->uniqueID = $session['sUserData']['additional']['user']['sessionID'];
+        $order->deviceType = $this->Request()->getDeviceType();
+        
+        $orderNumber = $order->sSaveOrder();
+
+        return $orderNumber;
+    }
+
+    /**
+     * Take order information as received from s_divido_sessions table
+     * and assign the data to the relevant Smarty variables
+     * 
+     * @param array $order The session information stored in `s_divido_sessions` table `data` column
+     * 
+     * @return void
+     */
+    protected function sendOrderToSmarty($order){
+
+        foreach($order as $key=>$value){
+            $this->View()->assign($key,$value);
+        }
+        $addresses['billing'] = $order['sUserData']['billingaddress'];
+        $addresses['shipping'] = $order['sUserData']['shippingaddress'];
+        $addresses['equal'] = 
+            ($order['sUserData']['billingaddress'] == $order['sUserData']['shippingaddress']);
+        $this->View()->assign('sAddresses', $addresses);
+        $this->View()->assign('sOrderNumber', $order['id']);
+        $this->View()->assign('sTransactionNumber', 
+            $order['sUserData']['additional']['user']['sessionID']);
     }
 }

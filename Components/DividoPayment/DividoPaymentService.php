@@ -59,7 +59,7 @@ class DividoPaymentService
      */
     public function createPaymentToken($amount, $customerId)
     {
-        return password_hash($this->createTokenContent($amount,$customerId));
+        return password_hash($this->createTokenContent($amount,$customerId), PASSWORD_DEFAULT);
     }
 
     /**
@@ -98,7 +98,7 @@ class DividoPaymentService
         \Enlight_Controller_Request_Request $request
     ){
         $response = new PaymentResponse();
-        $response->transactionId = $request->getParam('transactionId', null);
+        $response->sessionId = $request->getParam('dsid', null);
         $response->status = $request->getParam('status', null);
         $response->token = $request->getParam('token', null);
 
