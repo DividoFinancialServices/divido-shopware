@@ -344,12 +344,6 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      */
     public function returnAction()
     {
-        /*
-        /   Close any open session, in case we create an order with the same
-        /   session ID as the order we're currently closing
-        */
-        session_write_close();
-
         $service = $this->container->get('divido_payment.divido_payment_service');
         
         /** @var DividoPayment\Components\PaymentResponse $response */
@@ -386,11 +380,20 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                                 ->setParameter(0, $order['id'])
                                 ->setParameter(1, $session_id);
                             $query_builder->execute();
+
+                            /*
+                            /   Close the open session, in case we create an order with the same
+                            /   session ID as the order we're currently closing
+                            */
+                            session_write_close();
                         }else{
                             $this->View()->assign('error', 'Could not create order');
                             $this->View()->assign('template', 'frontend/divido_payment/error.tpl');
                         }
                     }else{
+                        echo("<pre>");
+                        print_r($order);
+                        echo("</pre>");
                         $order['id'] = $session['orderNumber'];
                     }
 
@@ -1028,7 +1031,6 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      * @return void
      */
     protected function sendOrderToSmarty($order){
-
         foreach($order as $key=>$value){
             $this->View()->assign($key,$value);
         }
@@ -1040,5 +1042,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $this->View()->assign('sOrderNumber', $order['id']);
         $this->View()->assign('sTransactionNumber', 
             $order['sUserData']['additional']['user']['sessionID']);
+        $this->View()->assign('sShippingcosts', $order['sBasket']['sShippingcosts']);
+        $this->View()->assign('sAmountNet', $order['sBasket']['AmountNetNumeric']);
     }
 }
