@@ -87,6 +87,13 @@ class WebhookResponse
     public $signature;
 
     /**
+     * The token
+     *
+     * @var string
+     */
+    public $token;
+
+    /**
      * The booking Id
      *
      * @var string

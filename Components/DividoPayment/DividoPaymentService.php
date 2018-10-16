@@ -85,7 +85,7 @@ class DividoPaymentService
         $dividoResponse->application = $data->application;
         $dividoResponse->signature   = $data->metadata->signature;
         $dividoResponse->token       = $data->metadata->token;
-        $dividoResponse->bookingId   = $data->metadata->bookingId;
+        $dividoResponse->amount      = $data->metadata->amount;
 
         return $dividoResponse;
     }

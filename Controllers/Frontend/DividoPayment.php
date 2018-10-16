@@ -213,7 +213,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             'language' => $language,
             'metadata' => [
                 'token'   => $token,
-                'amount' => $details['amount'],
+                'amount'  => $details['amount']
             ],
             'products'     => $products,
             'response_url' => $response_url,
@@ -224,8 +224,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
 
         $response = \Divido_CreditRequest::create($request_data);
 
-        //persist basket if good create order
-        //return with basket if fails
+        // Create divido session if request is okay and forward to the divido payment platform
         if ($response->status == 'ok') {
             $query_builder = $this->container->get('dbal_connection')->createQueryBuilder();
             $query_builder
@@ -245,9 +244,6 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             }
             $this->forward('cancel');
         }
-        //session_write_close();
-        //Customer
-        //Redirect to returned application or if fail killit
     }
 
     /**
@@ -339,6 +335,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      * Checks to see if the order is already complete
      * Completes the order or displays the completed order
      * or returns an appropriate response on failure
+     * (Probably a bit too busy!)
      *
      * @return void
      */
@@ -368,7 +365,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                     // If we haven't already generated the order already:
                     if(is_null($session['orderNumber'])){
                         $order['cleared'] = self::PAYMENTSTATUSOPEN;
-                        $order['id'] = $this->createOrder($session['transactionID'], $order);
+                        $order['id'] = $this->createOrder($session['transactionID'], $session['key'], $order);
                         
                         if($order['id']){
                             // Update the divido session so that this only gets run once
@@ -391,9 +388,6 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                             $this->View()->assign('template', 'frontend/divido_payment/error.tpl');
                         }
                     }else{
-                        echo("<pre>");
-                        print_r($order);
-                        echo("</pre>");
                         $order['id'] = $session['orderNumber'];
                     }
 
@@ -449,7 +443,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         /***
          * HMAC SIGNING
          */
-        /*
+        
         //Not working
         if (isset($_SERVER['HTTP_RAW_POST_DATA']) 
             && $_SERVER['HTTP_RAW_POST_DATA']) {
@@ -482,8 +476,8 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             }
 
         }
-        */
-        /* from other plugins
+        
+        /* from other plugins */
         if ( $this->secret != "" ) {
             $callback_sign = $_SERVER['HTTP_X_DIVIDO_HMAC_SHA256'];
             $sign = $this->createSignature( $data, $this->secret );
@@ -495,7 +489,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
 
             }
         }
-        */
+        
         /***
          * HMAC SIGNING
          */
@@ -996,9 +990,9 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      * @param string $transactionId The ID generated when making a Divido Credit Request
      * @param array $session The session information stored in `s_divido_sessions` table `data` column
      * 
-     * @return orderNumber (string) The ID of the new Order  stored in s_order
+     * @return orderNumber (string) The order number of the new Order stored in s_order
      */
-    protected function createOrder($transactionId, $session){
+    protected function createOrder($transactionId, $token, $session){
         $basket = $session['sBasket'];
         $order = Shopware()->Modules()->Order();
         $order->sUserData = $session['sUserData'];
@@ -1014,11 +1008,12 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $order->bookingId = $transactionId;
         $order->dispatchId = Shopware()->Session()->sDispatch;
         $order->sNet = empty($user['additional']['charge_vat']);
-        $order->uniqueID = $session['sUserData']['additional']['user']['sessionID'];
+        $order->uniqueID = $token;
         $order->deviceType = $this->Request()->getDeviceType();
         
+        $order->sCreateTemporaryOrder();
         $orderNumber = $order->sSaveOrder();
-
+        
         return $orderNumber;
     }
 
