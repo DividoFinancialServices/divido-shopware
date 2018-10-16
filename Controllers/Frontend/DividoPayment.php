@@ -195,12 +195,16 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             ->insert('s_divido_sessions')
             ->setValue('`key`','?')
             ->setValue('`data`','?')
+            ->setValue('`plan`','?')
+            ->setValue('`deposit`','?')
             ->setValue('`ip_address`','?')
             ->setValue('`created_on`','?')
             ->setParameter(0,$token)
             ->setParameter(1,serialize($data))
-            ->setParameter(2,$_SERVER['REMOTE_ADDR'])
-            ->setParameter(3,$now);
+            ->setParameter(2,$planId)
+            ->setParameter(3,$deposit)
+            ->setParameter(4,$_SERVER['REMOTE_ADDR'])
+            ->setParameter(5,$now);
         
         $add_session_query->execute();
         
@@ -365,16 +369,33 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                     // If we haven't already generated the order already:
                     if(is_null($session['orderNumber'])){
                         $order['cleared'] = self::PAYMENTSTATUSOPEN;
-                        $order['id'] = $this->createOrder($session['transactionID'], $session['key'], $order);
+                        $order['ordernumber'] = $this->createOrder($session['transactionID'], $session['key'], $order);
                         
-                        if($order['id']){
+                        if($order['ordernumber']){
+                            $order['id'] = $this->getOrderId($session['transactionID']);
+                            
+                            $attributePersister = $this->container->get(
+                                'shopware_attribute.data_persister'
+                            );
+
+                            $attributeData = array(
+                                'divido_finance_id' => $session['plan'],
+                                'divido_deposit_value' => $session['deposit'],
+                            );
+                            
+                            $attributePersister->persist(
+                                $attributeData,
+                                's_order_attributes',
+                                $order['id']
+                            );
+
                             // Update the divido session so that this only gets run once
                             $query_builder = $this->container->get('dbal_connection')->createQueryBuilder();
                             $query_builder
                                 ->update('`s_divido_sessions`')
                                 ->set('`orderNumber`', '?')
                                 ->where('`id` = ?')
-                                ->setParameter(0, $order['id'])
+                                ->setParameter(0, $order['ordernumber'])
                                 ->setParameter(1, $session_id);
                             $query_builder->execute();
 
@@ -388,7 +409,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                             $this->View()->assign('template', 'frontend/divido_payment/error.tpl');
                         }
                     }else{
-                        $order['id'] = $session['orderNumber'];
+                        $order['ordernumber'] = $session['orderNumber'];
                     }
 
                     /*
@@ -1034,9 +1055,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $addresses['equal'] = 
             ($order['sUserData']['billingaddress'] == $order['sUserData']['shippingaddress']);
         $this->View()->assign('sAddresses', $addresses);
-        $this->View()->assign('sOrderNumber', $order['id']);
-        $this->View()->assign('sTransactionNumber', 
-            $order['sUserData']['additional']['user']['sessionID']);
+        $this->View()->assign('sOrderNumber', $order['ordernumber']);
         $this->View()->assign('sShippingcosts', $order['sBasket']['sShippingcosts']);
         $this->View()->assign('sAmountNet', $order['sBasket']['AmountNetNumeric']);
     }

@@ -30,14 +30,14 @@ class DividoSession extends ModelEntity
     /**
      * @var string $transactionID
      *
-     * @ORM\Column(type="text", length=40, nullable=true)
+     * @ORM\Column(type="string", length=40, nullable=true)
      */
     private $transactionID;
 
     /**
      * @var string $key
      *
-     * @ORM\Column(type="text", nullable=false)
+     * @ORM\Column(type="string", nullable=false)
      */
     private $key;
 
@@ -47,6 +47,20 @@ class DividoSession extends ModelEntity
      * @ORM\Column(type="text", nullable=false)
      */
     private $data;
+
+    /**
+     * @var string $plan
+     *
+     * @ORM\Column(type="string", length=25, nullable=false)
+     */
+    private $plan;
+
+    /**
+     * @var string $deposit
+     *
+     * @ORM\Column(type="decimal", length=10, nullable=true)
+     */
+    private $deposit;
 
     /**
      * @var string $ip_address
