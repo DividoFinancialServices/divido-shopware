@@ -309,7 +309,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                 = $displayWarning . " Shipping and billing address must match.";
         }
 
-        if ($apiKey === '') {
+        if (empty($apiKey)) {
             $displayFinance = false;
             $displayWarning
                 = $displayWarning
@@ -776,8 +776,10 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             $dividoProductsArray[$i]['name']     = $product['articlename'];
             $dividoProductsArray[$i]['quantity'] = $product['quantity'];
             $dividoProductsArray[$i]['price']    = $product['price'];
-            $dividoProductsArray[$i]['plans']
+            if ($product['modus'] == '0') {
+                $dividoProductsArray[$i]['plans']
                 = $product['additional_details']['attributes']['core']->get('divido_finance_plans');
+            }
             $i++;
         }
 
