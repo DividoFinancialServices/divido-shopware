@@ -747,14 +747,12 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $i=2;
             
         foreach ($shopwareBasketArray['content'] as $id => $product) {
-
             $dividoProductsArray[$i]['name']     = $product['articlename'];
             $dividoProductsArray[$i]['quantity'] = $product['quantity'];
             $dividoProductsArray[$i]['price']    = $product['price'];
-            if ($product['articlename'] != 'Voucher') {
+            if ($product['modus'] == '0') {
                 $dividoProductsArray[$i]['plans']
                 = $product['additional_details']['attributes']['core']->get('divido_finance_plans');
-
             }
             $i++;
         }
