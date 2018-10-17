@@ -549,12 +549,14 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                 $this->debug('Webhook: Declined', 'info');
                 $message ='Declined Hook Success';
                 $order_status = self::PAYMENTREVIEWNEEDED;
+                $session_status = self::PAYMENTREVIEWNEEDED;
                 break;
 
             case self::STATUS_CANCELED:
                 $this->debug('Webhook: Canceled', 'info');
                 $message ='Canceled Hook Success';
                 $order_status = self::PAYMENTCANCELLED;
+                $session_status = self::PAYMENTCANCELLED;
                 break;
 
             case self::STATUS_DEPOSIT_PAID:
@@ -599,13 +601,15 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                 $paymentUniqueId,
                 self::PAYMENTSTATUSOPEN
             );
-        }elseif(isset($session_status)){
+        }
+        
+        if(isset($session_status)){
             $query_builder = $this->container->get('dbal_connection')->createQueryBuilder();
             $query_builder
                 ->update('`s_divido_sessions`')
                 ->set('`status`', '?')
                 ->where('`transactionID` = ?')
-                ->where('`key` = ?')
+                ->andWhere('`key` = ?')
                 ->setParameter(0, $session_status)
                 ->setParameter(1, $transactionId)
                 ->setParameter(2, $paymentUniqueId);
@@ -999,7 +1003,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $order->sUserData = $session['sUserData'];
         $order->sComment = "";
         $order->sBasketData = $basket;
-        $order->sAmount = $session['sAmount'];
+        $order->sAmount = $basket['sAmount'];
         $order->sAmountWithTax = 
             !empty($basket['AmountWithTaxNumeric']) ? $basket['AmountWithTaxNumeric'] : $basket['AmountNumeric'];
         $order->sAmountNet = $basket['AmountNetNumeric'];
@@ -1008,7 +1012,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $order->sShippingcostsNumericNet = $basket['sShippingcostsNet'];
         $order->bookingId = $transactionId;
         $order->dispatchId = Shopware()->Session()->sDispatch;
-        $order->sNet = empty($user['additional']['charge_vat']);
+        $order->sNet = empty($session['sUserData']['additional']['charge_vat']);
         $order->uniqueID = $token;
         $order->deviceType = $this->Request()->getDeviceType();
         

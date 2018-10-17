@@ -65,7 +65,7 @@ class DividoSession extends ModelEntity
     /**
      * @var string $deposit
      *
-     * @ORM\Column(type="decimal", length=10, nullable=true)
+     * @ORM\Column(type="string", length=10, nullable=true)
      */
     private $deposit;
 
@@ -205,7 +205,7 @@ class DividoSession extends ModelEntity
     }
 
     /**
-     * @param decimal $deposit
+     * @param string $deposit
      */
     public function setDeposit($deposit)
     {
