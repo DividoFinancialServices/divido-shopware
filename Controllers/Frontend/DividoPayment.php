@@ -374,6 +374,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                         if($order['ordernumber']){
                             $order['id'] = $this->getOrderId($session['transactionID']);
                             
+                            // Persist divido information to display on order in backend
                             $attributePersister = $this->container->get(
                                 'shopware_attribute.data_persister'
                             );
@@ -464,7 +465,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         /***
          * HMAC SIGNING
          */
-        
+        /*
         //Not working
         if (isset($_SERVER['HTTP_RAW_POST_DATA']) 
             && $_SERVER['HTTP_RAW_POST_DATA']) {
@@ -497,8 +498,8 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             }
 
         }
-        
-        /* from other plugins */
+        */
+        /* from other plugins
         if ( $this->secret != "" ) {
             $callback_sign = $_SERVER['HTTP_X_DIVIDO_HMAC_SHA256'];
             $sign = $this->createSignature( $data, $this->secret );
@@ -510,7 +511,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
 
             }
         }
-        
+        */
         /***
          * HMAC SIGNING
          */
@@ -959,26 +960,6 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $sql = 'SELECT id FROM s_order WHERE transactionID=?';
         $orderId = Shopware()->Db()->fetchOne($sql, array($transactionId));
         return $orderId;
-    }
-
-    protected function getUrlParameters(){
-        /** @var ExamplePaymentService $service */
-        $service = $this->container->get('divido_payment.divido_payment_service');
-        $router = $this->Front()->Router();
-        $user = $this->getUser();
-        $billing = $user['billingaddress'];
-
-        $parameter = [
-            'amount' => $this->getAmount(),
-            'currency' => $this->getCurrencyShortName(),
-            'firstName' => $billing['firstname'],
-            'lastName' => $billing['lastname'],
-            'returnUrl' => $router->assemble(['action' => 'return', 'forceSecure' => true]),
-            'cancelUrl' => $router->assemble(['action' => 'cancel', 'forceSecure' => true]),
-            'token' => $service->createPaymentToken($this->getAmount(), $billing['customernumber'])
-        ];
-
-        return '?' . http_build_query($parameter);
     }
 
     /**
