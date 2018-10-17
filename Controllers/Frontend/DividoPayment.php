@@ -370,11 +370,25 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                 if ($service->isValidToken($amount, $customer_number, $response->token)) {
                     // If we haven't already generated the order already:
                     if(is_null($session['orderNumber'])){
-                        $order['cleared'] = self::PAYMENTSTATUSPAID;
+                        
                         $order['ordernumber'] = $this->createOrder($session['transactionID'], $session['key'], $order);
                         
                         if($order['ordernumber']){
+
+                            $this->savePaymentStatus(
+                                $transactionId,
+                                $paymentUniqueId,
+                                self::PAYMENTSTATUSPAID
+                            );
+                            
                             $order['id'] = $this->getOrderId($session['transactionID']);
+
+                            // Set the order as Paid since we only get here once the contract is signed
+                            Shopware()->Db()->query("UPDATE `s_order` SET `cleared` = ? WHERE `id`= ? LIMIT 1", [
+                                self::PAYMENTSTATUSPAID,
+                                $order['id']
+                            ]);
+                            $order['cleared'] = self::PAYMENTSTATUSPAID;
                             
                             // Persist divido information to display on order in backend
                             $attributePersister = $this->container->get(
@@ -599,7 +613,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             $this->savePaymentStatus(
                 $transactionId,
                 $paymentUniqueId,
-                self::PAYMENTSTATUSOPEN
+                $order_status
             );
         }
         
