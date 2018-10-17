@@ -194,17 +194,19 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $add_session_query
             ->insert('s_divido_sessions')
             ->setValue('`key`','?')
+            ->setValue('`status`','?')
             ->setValue('`data`','?')
             ->setValue('`plan`','?')
             ->setValue('`deposit`','?')
             ->setValue('`ip_address`','?')
             ->setValue('`created_on`','?')
             ->setParameter(0,$token)
-            ->setParameter(1,serialize($data))
-            ->setParameter(2,$planId)
-            ->setParameter(3,$deposit)
-            ->setParameter(4,$_SERVER['REMOTE_ADDR'])
-            ->setParameter(5,$now);
+            ->setParameter(1,self::PAYMENTSTATUSOPEN)
+            ->setParameter(2,serialize($data))
+            ->setParameter(3,$planId)
+            ->setParameter(4,$deposit)
+            ->setParameter(5,$_SERVER['REMOTE_ADDR'])
+            ->setParameter(6,$now);
         
         $add_session_query->execute();
         
@@ -368,7 +370,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                 if ($service->isValidToken($amount, $customer_number, $response->token)) {
                     // If we haven't already generated the order already:
                     if(is_null($session['orderNumber'])){
-                        $order['cleared'] = self::PAYMENTSTATUSOPEN;
+                        $order['cleared'] = self::PAYMENTSTATUSPAID;
                         $order['ordernumber'] = $this->createOrder($session['transactionID'], $session['key'], $order);
                         
                         if($order['ordernumber']){
@@ -528,61 +530,37 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             case self::STATUS_PROPOSAL:
                 $this->debug('Webhook: Proposal', 'info');
                 $message ='Proposal Hook Success';
-                $this->savePaymentStatus(
-                    $transactionId,
-                    $paymentUniqueId,
-                    self::PAYMENTSTATUSOPEN
-                );
+                $session_status = self::PAYMENTSTATUSOPEN;
                 break;
 
             case self::STATUS_ACCEPTED:
                 $this->debug('Webhook: Accepted', 'info');
                 $message ='Accepted Hook Success';
-                $this->savePaymentStatus(
-                    $transactionId,
-                    $paymentUniqueId,
-                    self::PAYMENTSTATUSOPEN
-                );
+                $session_status = self::PAYMENTSTATUSOPEN;
                 break;
 
             case self::STATUS_SIGNED:
                 $this->debug('Webhook: Signed', 'info');
                 $message ='Signed Hook Success';
-                $this->savePaymentStatus(
-                    $transactionId,
-                    $paymentUniqueId,
-                    self::PAYMENTSTATUSPAID
-                );
+                $session_status = self::PAYMENTSTATUSPAID;
                 break;
 
             case self::STATUS_DECLINED:
                 $this->debug('Webhook: Declined', 'info');
                 $message ='Declined Hook Success';
-                $this->savePaymentStatus(
-                    $transactionId,
-                    $paymentUniqueId,
-                    self::PAYMENTREVIEWNEEDED
-                );
+                $order_status = self::PAYMENTREVIEWNEEDED;
                 break;
 
             case self::STATUS_CANCELED:
                 $this->debug('Webhook: Canceled', 'info');
                 $message ='Canceled Hook Success';
-                $this->savePaymentStatus(
-                    $transactionId,
-                    $paymentUniqueId,
-                    self::PAYMENTCANCELLED
-                );
+                $order_status = self::PAYMENTCANCELLED;
                 break;
 
             case self::STATUS_DEPOSIT_PAID:
                 $this->debug('Webhook: Deposit Paid', 'info');
                 $message ='Deposit Paid Hook Success';
-                $this->savePaymentStatus(
-                    $transactionId,
-                    $paymentUniqueId,
-                    self::PAYMENTSTATUSOPEN
-                );
+                $session_status = self::PAYMENTSTATUSOPEN;
                 break;
 
             case self::STATUS_ACTION_LENDER:
@@ -615,11 +593,30 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                 break;
         }
 
-            //update order based on whats sent through
-            //use signmature to determin if basket is set
-            //create order on signed
-            $this->respond(true, $message, false);
-            return ;
+        if(isset($order_status)){
+            $this->savePaymentStatus(
+                $transactionId,
+                $paymentUniqueId,
+                self::PAYMENTSTATUSOPEN
+            );
+        }elseif(isset($session_status)){
+            $query_builder = $this->container->get('dbal_connection')->createQueryBuilder();
+            $query_builder
+                ->update('`s_divido_sessions`')
+                ->set('`status`', '?')
+                ->where('`transactionID` = ?')
+                ->where('`key` = ?')
+                ->setParameter(0, $session_status)
+                ->setParameter(1, $transactionId)
+                ->setParameter(2, $paymentUniqueId);
+            $query_builder->execute();
+        }
+
+        //update order based on whats sent through
+        //use signmature to determine if basket is set
+        //create order on signed
+        $this->respond(true, $message, false);
+        return ;
     }
 
     /**

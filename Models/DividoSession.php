@@ -26,11 +26,18 @@ class DividoSession extends ModelEntity
      * @ORM\Column(type="integer", length=10, nullable=true)
      */
     private $orderNumber;
+    
+    /**
+     * @var integer $status
+     *
+     * @ORM\Column(type="integer", length=2, nullable=false)
+     */
+    private $status;
 
     /**
      * @var string $transactionID
      *
-     * @ORM\Column(type="string", length=40, nullable=true)
+     * @ORM\Column(type="string", length=40, nullable=false)
      */
     private $transactionID;
 
@@ -171,5 +178,53 @@ class DividoSession extends ModelEntity
     public function setCreatedOn($created_on)
     {
         $this->created_on = $created_on;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getStatus()
+    {
+        return $this->status;
+    }
+
+    /**
+     * @param int $status
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDeposit()
+    {
+        return $this->deposit;
+    }
+
+    /**
+     * @param decimal $deposit
+     */
+    public function setDeposit($deposit)
+    {
+        $this->deposit = $deposit;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPlan()
+    {
+        return $this->plan;
+    }
+
+    /**
+     * @param int $plan
+     */
+    public function setPlan($plan)
+    {
+        $this->plan = $plan;
     }
 }
