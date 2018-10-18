@@ -21,11 +21,32 @@ class DividoSession extends ModelEntity
     private $id;
 
     /**
-     * @var integer $orderID
+     * @var integer $orderNumber
      *
      * @ORM\Column(type="integer", length=10, nullable=true)
      */
-    private $orderID;
+    private $orderNumber;
+    
+    /**
+     * @var integer $status
+     *
+     * @ORM\Column(type="integer", length=2, nullable=false)
+     */
+    private $status;
+
+    /**
+     * @var string $transactionID
+     *
+     * @ORM\Column(type="string", length=40, nullable=false)
+     */
+    private $transactionID;
+
+    /**
+     * @var string $key
+     *
+     * @ORM\Column(type="string", nullable=false)
+     */
+    private $key;
 
     /**
      * @var string $data
@@ -33,6 +54,20 @@ class DividoSession extends ModelEntity
      * @ORM\Column(type="text", nullable=false)
      */
     private $data;
+
+    /**
+     * @var string $plan
+     *
+     * @ORM\Column(type="string", length=25, nullable=false)
+     */
+    private $plan;
+
+    /**
+     * @var string $deposit
+     *
+     * @ORM\Column(type="string", length=10, nullable=true)
+     */
+    private $deposit;
 
     /**
      * @var string $ip_address
@@ -57,19 +92,44 @@ class DividoSession extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return int
      */
-    public function getOrderId()
+    public function getOrderNumber()
     {
-        return $this->orderID;
+        return $this->orderNumber;
     }
 
     /**
-     * @param string $orderID
+     * @param int $orderNumber
      */
-    public function setOrderId($orderID)
+    public function setOrderNumber($orderNumber)
     {
-        $this->orderID = $orderID;
+        $this->orderNumber = $orderNumber;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTransactionID()
+    {
+        return $this->transactionID;
+    }
+
+    /**
+     * @param string $transactionID
+     */
+    public function setTransactionID($transactionID)
+    {
+        $this->transactionID = $transactionID;
+    }
+
+
+    /**
+     * @return string
+     */
+    public function getKey()
+    {
+        return $this->key;
     }
 
     /**
@@ -118,5 +178,53 @@ class DividoSession extends ModelEntity
     public function setCreatedOn($created_on)
     {
         $this->created_on = $created_on;
+    }
+    
+    /**
+     * @return int
+     */
+    public function getStatus()
+    {
+        return $this->status;
+    }
+
+    /**
+     * @param int $status
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDeposit()
+    {
+        return $this->deposit;
+    }
+
+    /**
+     * @param string $deposit
+     */
+    public function setDeposit($deposit)
+    {
+        $this->deposit = $deposit;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPlan()
+    {
+        return $this->plan;
+    }
+
+    /**
+     * @param int $plan
+     */
+    public function setPlan($plan)
+    {
+        $this->plan = $plan;
     }
 }

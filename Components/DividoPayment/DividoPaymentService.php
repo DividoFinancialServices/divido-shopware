@@ -40,9 +40,13 @@ class DividoPaymentService
      *
      * @return bool
      */
-    public function isValidToken(PaymentResponse $response, $token)
+    public function isValidToken($amount, $customer_id, $token)
     {
-        return hash_equals($token, $response->token);
+        return password_verify($this->createTokenContent($amount,$customer_id), $token);
+    }
+
+    private function createTokenContent($amount,$customerId){
+        return implode('|', [$amount, $customerId]);
     }
 
     /**
@@ -55,7 +59,7 @@ class DividoPaymentService
      */
     public function createPaymentToken($amount, $customerId)
     {
-        return md5(implode('|', [$amount, $customerId]));
+        return password_hash($this->createTokenContent($amount,$customerId), PASSWORD_DEFAULT);
     }
 
     /**
@@ -81,8 +85,23 @@ class DividoPaymentService
         $dividoResponse->application = $data->application;
         $dividoResponse->signature   = $data->metadata->signature;
         $dividoResponse->token       = $data->metadata->token;
-        $dividoResponse->bookingId   = $data->metadata->bookingId;
+        $dividoResponse->amount      = $data->metadata->amount;
 
         return $dividoResponse;
+    }
+
+    /**
+     * @param $request \Enlight_Controller_Request_Request
+     * @return PaymentResponse
+     */
+    public function createPaymentResponse(
+        \Enlight_Controller_Request_Request $request
+    ){
+        $response = new PaymentResponse();
+        $response->sessionId = $request->getParam('dsid', null);
+        $response->status = $request->getParam('status', null);
+        $response->token = $request->getParam('token', null);
+
+        return $response;
     }
 }

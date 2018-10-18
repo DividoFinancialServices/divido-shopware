@@ -56,7 +56,7 @@ class DividoPayment extends Plugin
             'name' => 'divido_payment',
             'description' => 'Divido payment',
             'action' => 'DividoPayment',
-            'active' => 0,
+            'active' => 1,
             'position' => 0,
             'additionalDescription' =>
                 '<img src="https://s3-eu-west-1.amazonaws.com/content.divido.com/images/logo-blue-75x23.png"/>' //
