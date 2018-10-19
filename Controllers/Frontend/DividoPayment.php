@@ -163,7 +163,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             $deposit='';
         }
  
-        Divido::setMerchant($apiKey);
+        \Divido::setMerchant($apiKey);
 
         $apiKey = $config['Api Key'];
         $planId= $_POST['divido_plan'];
