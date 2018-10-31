@@ -4,6 +4,7 @@ namespace DividoPayment\Models;
 
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
+use DividoPayment\Components\DividoPayment\DividoHelper;
 
 /**
  * @ORM\Table(name="s_divido_sessions")
@@ -84,6 +85,20 @@ class DividoSession extends ModelEntity
     private $created_on;
 
     /**
+     * Array of the keys of fields we want to retain in the divido session table in
+     * case the session times out before the customer completes the signing process
+     */
+    private $retained_array_keys = array(
+        'sUserData',
+        'sBasket',
+        'sAmount',
+        'sPayment',
+        'sDispatch'
+    );
+
+    private const session_table = 's_divido_sessions';
+
+    /**
      * @return int
      */
     public function getId()
@@ -133,6 +148,14 @@ class DividoSession extends ModelEntity
     }
 
     /**
+     * @param string $key
+     */
+    public function setKey($key)
+    {
+        $this->key = $key;
+    }
+
+    /**
      * @return string
      */
     public function getData()
@@ -145,6 +168,19 @@ class DividoSession extends ModelEntity
      */
     public function setData($data)
     {
+        $this->data = $data;
+    }
+
+    /**
+     * 
+     */
+    public function setDataFromShopwareSession(){
+        $session_data = Shopware()->Session()->sOrderVariables;
+        $data = [];
+        foreach($this->retained as $key){
+            if(isset($session_data[$key]))
+               $data[$key] = $session_data[$key];
+        }
         $this->data = $data;
     }
 
@@ -226,5 +262,182 @@ class DividoSession extends ModelEntity
     public function setPlan($plan)
     {
         $this->plan = $plan;
+    }
+
+
+    /**
+     * Retrieve session from database via session id
+     */
+    public function retrieveFromDb($id, $connection){
+        $get_session_query = $connection->createQueryBuilder();
+        $session_sql = "SELECT * FROM `".self::session_table."` WHERE `id`= :id LIMIT 1";
+        $session = $connection->fetchAll($session_sql,[':id' => $id]);
+        if(isset($session[0])){
+            $this->id = $id;
+            $this->orderNumber = $session[0]['order_number'];
+            $this->transactionID = $session[0]['transactionID'];
+            $this->key = $session[0]['key'];
+            $this->data = unserialize($session[0]['data']);
+            $this->plan = $session[0]['plan'];
+            $this->deposit = $session[0]['deposit'];
+            $this->ip_address = $session[0]['ip_address'];
+            $this->created_on = $session[0]['created_on'];
+            $this->status = $session[0]['status'];
+            return true;
+        }else return false;
+    }
+
+    public function store($connection){
+        $ip_address = (!empty($this->ip_address)) ? $this->ip_address : $_SERVER['REMOTE_ADDR'] ;
+        $add_session_query = $connection->createQueryBuilder();
+        $created_on = (!empty($this->created_on)) ? $this->createdon : time();
+        $add_session_query
+            ->insert(self::session_table)
+            ->setValue('`orderNumber`','?')
+            ->setValue('`transactionID`','?')
+            ->setValue('`key`','?')
+            ->setValue('`status`','?')
+            ->setValue('`data`','?')
+            ->setValue('`plan`','?')
+            ->setValue('`deposit`','?')
+            ->setValue('`ip_address`','?')
+            ->setValue('`created_on`','?')
+            ->setParameter(0,$this->orderNumber)
+            ->setParameter(1,$this->transactionID)
+            ->setParameter(2,$this->getKey())
+            ->setParameter(3,$this->getStatus())
+            ->setParameter(4,serialize($this->data))
+            ->setParameter(5,$this->plan)
+            ->setParameter(6,$this->deposit)
+            ->setParameter(7,$ip_address)
+            ->setParameter(8,$created_on);
+        
+        $add_session_query->execute();
+
+        $this->id = $connection->lastInsertId();
+        
+        return $this->id;
+    }
+
+    public function update($connection){
+        if(!isset($this->id)){
+            DividoHelper::Debug('Could not update session: No unique id to reference');
+            return false;
+        }
+
+        $add_session_query = $connection->createQueryBuilder();
+        $add_session_query->update(self::session_table);
+        
+        if(!is_null($this->orderNumber)){
+            $add_session_query
+                ->set('`orderNumber`',':orderNumber')
+                ->setParameter(':orderNumber', $this->orderNumber);
+        }
+
+        if(!is_null($this->transactionID)){
+            $add_session_query
+                ->set('`transactionID`',':transactionID')
+                ->setParameter(':transactionID', $this->transactionID);
+        }
+
+        if(!is_null($this->key)){
+            $add_session_query
+                ->set('`key`',':key')
+                ->setParameter(':key', $this->key);
+        }
+
+        if(!is_null($this->status)){
+            $add_session_query
+                ->set('`status`',':status')
+                ->setParameter(':status', $this->status);
+        }
+
+        if(!is_null($this->data)){
+            $add_session_query
+                ->set('`data`',':data')
+                ->setParameter(':data', $this->data);
+        }
+
+        if(!is_null($this->plan)){
+            $add_session_query
+                ->set('`plan`',':plan')
+                ->setParameter(':plan', $this->plan);
+        }
+
+        if(!is_null($this->deposit)){
+            $add_session_query
+                ->set('`deposit`',':deposit')
+                ->setParameter(':deposit', $this->deposit);
+        }
+
+        if(!is_null($this->ip_address)){
+            $add_session_query
+                ->set('`ip_address`',':ip_address')
+                ->setParameter(':ip_address', $this->ip_address);
+        }
+
+        if(!is_null($this->created_on)){
+            $add_session_query
+                ->set('`created_on`',':created_on')
+                ->setParameter(':created_on', $this->created_on);
+        }
+
+        $add_session_query
+            ->where('`id` = :id')
+            ->setParameter(':id', $this->id);
+        
+        return $add_session_query->execute();
+    }
+
+    /**
+     * Generate an order based on the session data stored in the s_divido_sessions table
+     * 
+     * @param string $transactionId The ID generated when making a Divido Credit Request
+     * @param string $token The unique string used as a public key for the order
+     * 
+     * @return orderNumber (string) The order number of the new Order stored in s_order
+     */
+    public function createOrder($device=''){
+        $session = $this->getData();
+        $basket = $session['sBasket'];
+        $order = Shopware()->Modules()->Order();
+        $order->sUserData = $session['sUserData'];
+        $order->sComment = "";
+        $order->sBasketData = $basket;
+        $order->sAmount = $basket['sAmount'];
+        $order->sAmountWithTax = 
+            !empty($basket['AmountWithTaxNumeric']) ? $basket['AmountWithTaxNumeric'] : $basket['AmountNumeric'];
+        $order->sAmountNet = $basket['AmountNetNumeric'];
+        $order->sShippingcosts = $basket['sShippingcosts'];
+        $order->sShippingcostsNumeric = $basket['sShippingcostsWithTax'];
+        $order->sShippingcostsNumericNet = $basket['sShippingcostsNet'];
+        $order->bookingId = $this->getTransactionId();
+        $order->dispatchId = Shopware()->Session()->sDispatch;
+        $order->sNet = empty($session['sUserData']['additional']['charge_vat']);
+        $order->uniqueID = $this->getKey();
+        $order->deviceType = $device;
+        
+        return $order;
+    }
+
+    public static function delete($connection, $where){
+        $del_session_query = $connection->createQueryBuilder();
+        $del_session_query->delete(self::session_table)->where("`id`='{$where['id']}'");
+        
+        foreach($where as $key => $value)
+            $del_session_query->where("{$key} = :{$key}")->setParameter(":{$key}",$value);
+        
+        return $del_session_query->execute();
+    }
+
+    public static function findSessions($criteria,$connection){
+        $find_session_query = $connection->createQueryBuilder();
+        $find_session_query->select(self::session_table);
+        
+        foreach($criteria as $key=>$value)
+            $find_session_query->where("`{$key}`= :{$key}")->setParameter(":{$key}",$value);
+        
+        $find_session_query->execute();
+        return $find_session_query->fetch_all();
     }
 }
