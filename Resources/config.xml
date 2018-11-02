@@ -3,13 +3,26 @@
         xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/5.3/engine/Shopware/Components/Plugin/schema/config.xsd">
     <elements>
         <element required="true" type="text" scope="locale">
-            <name>Api Key</name>
-            <label lang="de">Api Key</label>
-            <label lang="en">Api Key</label>
-            <description lang="de">Please add a divido api key</description>
-            <description lang="en">Please add a divido api key</description>
+            <name>API Key</name>
+            <label lang="de">API Key</label>
+            <label lang="en">API Key</label>
+            <description lang="de">The API-key is provided by your finance provider</description>
+            <description lang="en">The API-key is provided by your finance provider</description>
         </element>
 
+        <!--Held for further testing
+        <element required="false" type="text" scope="locale">
+            <name>Shared Secret</name>
+            <label lang="de">Shared Secret</label>
+            <label lang="en">Shared Secret</label>
+            <description lang="de">
+                The optional shared secret is used to verify webhooks from your finance provider.
+            </description>
+            <description lang="en">
+                The optional shared secret is used to verify webhooks from your finance provider.
+            </description>
+        </element> 
+        -->
 
         <element required="true" type="boolean" scope="locale">
             <name>Debug</name>
@@ -45,17 +58,7 @@
             <description lang="en">Allow a small price widget</description>
         </element>
 
-<!--Held for further testing
         <element required="false" type="text" scope="locale">
-            <name>Shared Secret</name>
-            <label lang="de">Shared Secret</label>
-            <label lang="en">Shared Secret</label>
-            <description lang="de">Shared Secret</description>
-            <description lang="en">Shared Secret</description>
-        </element> 
--->
-
-     <element required="false" type="text" scope="locale">
             <name>Widget Prefix</name>
             <label lang="de">Widget Prefix</label>
             <label lang="en">Widget Prefix</label>
@@ -63,14 +66,13 @@
             <description lang="en">Widget Prefix</description>
         </element>
         
-     <element required="false" type="text" scope="locale">
+        <element required="false" type="text" scope="locale">
             <name>Widget Suffix</name>
             <label lang="de">Widget Suffix</label>
             <label lang="en">Widget Suffix</label>
             <description lang="de">Widget Suffix</description>
             <description lang="en">Widget Suffix</description>
         </element>
-
 
     </elements>
 </config>

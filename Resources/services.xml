@@ -8,9 +8,11 @@
             <argument>%divido_payment.plugin_dir%</argument>
             <tag name="shopware.event_subscriber"/>
         </service>
-        
         <service id="divido_payment.divido_payment_service"
                  class="DividoPayment\Components\DividoPayment\DividoPaymentService">
+        </service>
+        <service id="divido_payment.divido_order_service"
+                 class="DividoPayment\Components\DividoPayment\DividoOrderService">
         </service>
         <!-- Register TemplateRegistration subscriber -->
         <service id="divido_payment.subscriber.template_registration" class="DividoPayment\Subscriber\TemplateRegistration">

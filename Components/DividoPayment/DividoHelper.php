@@ -14,7 +14,7 @@ class DividoHelper
      */
     public static function debug($msg, $type = false)
     {
-        $debug = self::getDividoDebug();
+        $debug = self::getDebug();
 
         if (! $debug) {
             return false;
@@ -74,7 +74,7 @@ class DividoHelper
      *
      * @return array
      */
-    public static function getDividoConfig()
+    public static function getConfig()
     {
 
         $config = Shopware()
@@ -92,7 +92,7 @@ class DividoHelper
      */
     public static function getConfByKey($key)
     {
-        $config = self::getDividoConfig();
+        $config = self::getConfig();
         return $config[$key];
     }
 
@@ -101,9 +101,9 @@ class DividoHelper
      *
      * @return string
      */
-    public static function getDividoApiKey()
+    public static function getApiKey()
     {
-        $config = self::getDividoConfig();
+        $config = self::getConfig();
         return $config['Api Key'];
     }
 
@@ -112,9 +112,9 @@ class DividoHelper
      *
      * @return bool
      */
-    public static function getDividoDebug()
+    public static function getDebug()
     {
-        $config = self::getDividoConfig();
+        $config = self::getConfig();
         return $config['Debug'];
     }
 
@@ -123,9 +123,9 @@ class DividoHelper
      *
      * @return string
      */
-    public static function getDividoTitle()
+    public static function getTitle()
     {
-        $config = self::getDividoConfig();
+        $config = self::getConfig();
         return $config['Title'];
     }
 
@@ -134,9 +134,9 @@ class DividoHelper
      *
      * @return string
      */
-    public static function getDividoDescription()
+    public static function getDescription()
     {
-        $config = self::getDividoConfig();
+        $config = self::getConfig();
         return $config['Description'];
     }
     /**
@@ -144,9 +144,9 @@ class DividoHelper
      *
      * @return string
      */
-    public static function getDividoSharedSecret()
+    public static function getSharedSecret()
     {
-        $config = self::getDividoConfig();
+        $config = self::getConfig();
         return $config['Shared Secret'];
     }
     /**
@@ -154,14 +154,14 @@ class DividoHelper
      *
      * @return int
      */
-    public static function getDividoCartThreshold()
+    public static function getCartThreshold()
     {
-        $config = self::getDividoConfig();
+        $config = self::getConfig();
         return $config['Cart Threshold'];
     }
 
     /**
-     * Create customer details for divido credit request
+     * Create customer details for credit request
      *
      * @return Array
      */
@@ -171,8 +171,8 @@ class DividoHelper
         $billing = $user['billingaddress'];
         $shipping = $user['shippingaddress'];
 
-        $billingAddress=self::transformShopwareToDividoAddress($billing);
-        $shippingAddress=self::transformShopwareToDividoAddress($shipping);
+        $billingAddress=self::formatShopwareAddress($billing);
+        $shippingAddress=self::formatShopwareAddress($shipping);
         $country = $user['additional']['country']['countryiso'];
  
         $customerArray=array();
@@ -196,7 +196,7 @@ class DividoHelper
      *
      * @return array
      */
-    public function transformShopwareToDividoAddress($shopwareAddressArray)
+    private function formatShopwareAddress($shopwareAddressArray)
     {
         self::debug('Add array:'.serialize($shopwareAddressArray), 'info');
 
@@ -248,23 +248,7 @@ class DividoHelper
         return $dividoProductsArray;
     }
 
-    /**
-     * Helper function to grab data for credit request
-     *
-     * @param array $shopwareBasketArray passed in array
-     *
-     * @return void
-     */
-    public function getOrderDetails($shopwareBasketArray)
-    {
-        $formattedArray = array();
-        $formattedArray['currency']  = self::getCurrencyShortName();
-        $formattedArray['amount']    = self::getAmount();
-        $formattedArray['reference'] = self::getOrderNumber();
-        return $formattedArray;
-    }
-
-    /**
+    /** 
      * Work out the total deposit amount from  the percentage and round it
      *
      * @param float $total   total of the order
@@ -276,6 +260,64 @@ class DividoHelper
     {
         $depositPercentage = $deposit / 100;
         return round($depositPercentage * $total, 2);
+    }
+
+    public function getBasketPlans($products){
+        $basket_plans = [];
+        foreach($products as $product){
+            if(isset($product['plans'])){
+                $product_plans = explode("|",$product['plans']);
+                if(empty($basket_plans)){
+                    foreach($product_plans as $plan){
+                        if(!empty($plan)) $basket_plans[] = $plan;
+                    }
+                }else{
+                    if(!empty($product_plans)){
+                        foreach($basket_plans as $k=>$listed){
+                            if(!in_array($listed,$product_plans)){
+                                unset($basket_plans[$k]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $basket_plans;
+    }
+
+    public function hmacSign(){
+        //Not working
+        if (isset($_SERVER['HTTP_RAW_POST_DATA']) 
+            && $_SERVER['HTTP_RAW_POST_DATA']) {
+            self::debug('Raw Data :','info');
+
+            $data = file_get_contents($_SERVER['HTTP_RAW_POST_DATA']);
+        } else {
+            self::debug('PHP input:','info');
+            $data = file_get_contents('php://input');
+        }
+
+        self::debug('Shared Secret:'.$this->getDividoSharedSecret(),'info');
+
+        $sharedSecret = self::getSharedSecret();
+        if(!empty($sharedSecret))
+        {
+            $callback_sign = $_SERVER['HTTP_X_DIVIDO_HMAC_SHA256'];
+
+            self::debug('Callback Sign: '.$callback_sign , 'info');
+            self::debug('Callback DATA: '.$data,'info');
+
+            $sign = self::createSignature($data, $sharedSecret);
+
+            self::debug('Created Signature: '.$sign,'info');
+
+            if ( $callback_sign !== $sign ) {
+                self::debug('Hash error','error');
+                //$this->send_json( 'error', 'Hash error.' );
+                return false;
+            }
+        }
+        return true;
     }
 
 }

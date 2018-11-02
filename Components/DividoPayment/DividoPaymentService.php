@@ -98,7 +98,7 @@ class DividoPaymentService
         \Enlight_Controller_Request_Request $request
     ){
         $response = new PaymentResponse();
-        $response->sessionId = $request->getParam('dsid', null);
+        $response->sessionId = $request->getParam('sid', null);
         $response->status = $request->getParam('status', null);
         $response->token = $request->getParam('token', null);
 

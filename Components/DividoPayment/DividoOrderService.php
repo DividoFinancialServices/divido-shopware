@@ -25,6 +25,35 @@ class DividoOrderService
         return $orderNumber;
     }
 
+    public function getId($transactionID, $key, $connection){
+        $criteria = [
+            "transactionID" => $transactionID,
+            "temporaryID" => $key
+        ];
+        $orders = $this->findOrders($criteria,$connection);
+        return $orders[0]['id'];
+    }
+
+    public function updateOrder($connection, $order, $reference_key){
+        if(!isset($order[$reference_key])){
+            DividoHelper::Debug('Could not update session: Reference key not set or does not exist');
+            return false;
+        }
+        $update_order_query = $connection->createQueryBuilder();
+        $update_order_query->update('s_order');
+
+        foreach($order as $key=>$value){
+            if($key == $reference_key){
+                $update_order_query->where("`$key` = :$key");
+            }else{
+                $update_order_query->set("`$key`",":$key");
+            }
+            $update_order_query->setParameter(":$key", $value);
+        }
+
+        return $update_order_query->execute();
+    }
+
     public function findOrders($criteria, $connection){
         $find_order_query = $connection->createQueryBuilder();
         $find_order_query->select('s_order');

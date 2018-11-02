@@ -7,11 +7,12 @@ use Shopware\Components\Model\ModelEntity;
 use DividoPayment\Components\DividoPayment\DividoHelper;
 
 /**
- * @ORM\Table(name="s_divido_sessions")
+ * @ORM\Table(name="s_sessions")
  * @ORM\Entity
  */
 class DividoSession extends ModelEntity
 {
+    private $table = 's_sessions';
     /**
      * @var integer $id
      *
@@ -38,7 +39,7 @@ class DividoSession extends ModelEntity
     /**
      * @var string $transactionID
      *
-     * @ORM\Column(type="string", length=40, nullable=false)
+     * @ORM\Column(type="string", length=40, nullable=true)
      */
     private $transactionID;
 
@@ -96,7 +97,7 @@ class DividoSession extends ModelEntity
         'sDispatch'
     );
 
-    private const session_table = 's_divido_sessions';
+    private const session_table = 's_sessions';
 
     /**
      * @return int
@@ -325,75 +326,74 @@ class DividoSession extends ModelEntity
             return false;
         }
 
-        $add_session_query = $connection->createQueryBuilder();
-        $add_session_query->update(self::session_table);
+        $update_session_query = $connection->createQueryBuilder();
+        $update_session_query->update(self::session_table);
         
         if(!is_null($this->orderNumber)){
-            $add_session_query
+            $update_session_query
                 ->set('`orderNumber`',':orderNumber')
                 ->setParameter(':orderNumber', $this->orderNumber);
         }
 
         if(!is_null($this->transactionID)){
-            $add_session_query
+            $update_session_query
                 ->set('`transactionID`',':transactionID')
                 ->setParameter(':transactionID', $this->transactionID);
         }
 
         if(!is_null($this->key)){
-            $add_session_query
+            $update_session_query
                 ->set('`key`',':key')
                 ->setParameter(':key', $this->key);
         }
 
         if(!is_null($this->status)){
-            $add_session_query
+            $update_session_query
                 ->set('`status`',':status')
                 ->setParameter(':status', $this->status);
         }
 
         if(!is_null($this->data)){
-            $add_session_query
+            $update_session_query
                 ->set('`data`',':data')
-                ->setParameter(':data', $this->data);
+                ->setParameter(':data', serialize($this->data));
         }
 
         if(!is_null($this->plan)){
-            $add_session_query
+            $update_session_query
                 ->set('`plan`',':plan')
                 ->setParameter(':plan', $this->plan);
         }
 
         if(!is_null($this->deposit)){
-            $add_session_query
+            $update_session_query
                 ->set('`deposit`',':deposit')
                 ->setParameter(':deposit', $this->deposit);
         }
 
         if(!is_null($this->ip_address)){
-            $add_session_query
+            $update_session_query
                 ->set('`ip_address`',':ip_address')
                 ->setParameter(':ip_address', $this->ip_address);
         }
 
         if(!is_null($this->created_on)){
-            $add_session_query
+            $update_session_query
                 ->set('`created_on`',':created_on')
                 ->setParameter(':created_on', $this->created_on);
         }
 
-        $add_session_query
+        $update_session_query
             ->where('`id` = :id')
             ->setParameter(':id', $this->id);
         
-        return $add_session_query->execute();
+        return $update_session_query->execute();
     }
 
     /**
-     * Generate an order based on the session data stored in the s_divido_sessions table
+     * Generate an order based on the session data stored in the session table
      * 
-     * @param string $transactionId The ID generated when making a Divido Credit Request
-     * @param string $token The unique string used as a public key for the order
+     * @param string $device The type of device used when making this request
      * 
      * @return orderNumber (string) The order number of the new Order stored in s_order
      */
@@ -439,5 +439,25 @@ class DividoSession extends ModelEntity
         
         $find_session_query->execute();
         return $find_session_query->fetch_all();
+    }
+
+    public static function updateByRef($connection, $session, $reference_key){
+        if(!isset($session[$reference_key])){
+            DividoHelper::Debug('Could not update session: Reference key not set or does not exist');
+            return false;
+        }
+        $update_session_query = $connection->createQueryBuilder();
+        $update_session_query->update('s_order');
+
+        foreach($order as $key=>$value){
+            if($key == $reference_key){
+                $update_session_query->where("`$key` = :$key");
+            }else{
+                $add_session_query->set("`$key`",":$key");
+            }
+            $add_session_query->setParameter(":$key", $value);
+        }
+
+        return $add_session_query->execute();
     }
 }

@@ -14,12 +14,16 @@ class DividoRequestService
         return (isset($this->request[$key])) ? $this->request[$key] : false;
     }
 
-    public function setRequestFields(Array $fields){
-        array_merge($this->request,$fields);
+    public function setRequestFieldsByArray(Array $fields){
+        $this->request = array_merge($this->request,$fields);
     }
 
     public function makeRequest(){
         $response = \Divido_CreditRequest::create($this->request);
+        return $response;
+    }
 
+    public function dumpRequest(){
+        var_dump($this->request);
     }
 }
