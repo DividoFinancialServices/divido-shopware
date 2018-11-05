@@ -39,6 +39,7 @@
       <li>{$warning}</li>
       {/foreach}
     </ul>
+    {/if}
     <br>
     <a class="btn"
         href="{url controller=checkout action=cart}"

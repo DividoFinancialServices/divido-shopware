@@ -7,7 +7,9 @@ class DividoRequestService
     private $request = [];
 
     public function setRequestField($key,$value){
-        $this->request[$key] = $value;
+        $cloned = clone $this;
+        $cloned->request[$key] = $value;
+        return $cloned;
     }
 
     public function getRequestField($key){
@@ -15,7 +17,9 @@ class DividoRequestService
     }
 
     public function setRequestFieldsByArray(Array $fields){
-        $this->request = array_merge($this->request,$fields);
+        $cloned = clone $this;
+        $cloned->request = array_merge($cloned->request,$fields);
+        return $cloned;
     }
 
     public function makeRequest(){

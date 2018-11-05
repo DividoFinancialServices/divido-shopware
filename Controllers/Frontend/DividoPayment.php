@@ -119,7 +119,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      */
     public function indexAction()
     {
-        $this->debug('Index view', 'info');
+        DividoHelper::debug('Index view', 'info');
         return $this->redirect(['action' => 'finance', 'forceSecure' => false]);
     }
 
@@ -134,7 +134,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      */
     public function directAction()
     {
-        $this->debug('Direct Action', 'info');
+        DividoHelper::debug('Direct Action', 'info');
         
         $service = $this->container->get('divido_payment.divido_payment_service');
         $router = $this->Front()->Router();
@@ -184,29 +184,28 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             'amount' => $amount
         ];
         
-        $dividoRequest = new DividoRequestService;
-        $dividoRequest->setRequestField('merchant', $apiKey);
-        $dividoRequest->setRequestField('deposit', $deposit);
-        $dividoRequest->setRequestField('finance', $planId);
-        //$dividoRequest->setRequestField('language', $language);
-        $dividoRequest->setRequestField('metadata', $metadata);
-        $dividoRequest->setRequestField('products', DividoHelper::getOrderProducts($basket));
-        $dividoRequest->setRequestField(
-            'response_url', 
-            $router->assemble(['action' => 'webhook', 'forceSecure' => true])
-        );
         $redirect_url = $router->assemble(['action' => 'return', 'forceSecure' => true]);
-        $dividoRequest->setRequestField(
-            'redirect_url', 
-            $redirect_url."?sid={$sessionId}&token={$token}"
-        );
-        $dividoRequest->setRequestField('currency', $this->getCurrencyShortName());
-        $dividoRequest->setRequestField('amount', $amount);
-        $dividoRequest->setRequestField('reference', $this->getOrderNumber());
-
-        $dividoRequest->setRequestFieldsByArray($customer);
-
-        $dividoRequest->dumpRequest();
+        
+        $dividoRequest = new DividoRequestService;
+        $dividoRequest = $dividoRequest
+            ->setRequestField('merchant', $apiKey)
+            ->setRequestField('deposit', $deposit)
+            ->setRequestField('finance', $planId)
+            ->setRequestField('language', $language)
+            ->setRequestField('metadata', $metadata)
+            ->setRequestField('products', DividoHelper::getOrderProducts($basket))
+            ->setRequestField(
+                'response_url', 
+                $router->assemble(['action' => 'webhook', 'forceSecure' => true])
+            )
+            ->setRequestField(
+                'redirect_url', 
+                $redirect_url."?sid={$sessionId}&token={$token}"
+            )
+            ->setRequestField('currency', $this->getCurrencyShortName())
+            ->setRequestField('amount', $amount)
+            ->setRequestField('reference', $this->getOrderNumber())
+            ->setRequestFieldsByArray($customer);
 
         $response = $dividoRequest->makeRequest();
 
@@ -234,7 +233,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      */
     public function financeAction()
     {
-        $this->debug('Finance view', 'info');
+        DividoHelper::debug('Finance view', 'info');
         header('Access-Control-Allow-Origin: *');
         
         $basket = $this->getBasket();
@@ -293,6 +292,9 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      */
     public function returnAction()
     {
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
+
         $paymentService = $this->container->get('divido_payment.divido_payment_service');
         $orderService = $this->container->get('divido_payment.divido_order_service');
         
@@ -319,10 +321,13 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                         $device = $this->Request()->getDeviceType();
                         $order = $session->createOrder($device);
 
-                        $orderNumber = $orderService->saveOrder();
+                        $orderNumber = $orderService->saveOrder($order);
                         if($orderNumber){
-                            $orderID = $connection->lastInsertId();
-
+                            $orderID = $orderService->getId(
+                                $session->getTransactionID(),
+                                $session->getKey(),
+                                $connection
+                            );
                             $order->setPaymentStatus($orderID, self::PAYMENTSTATUSPAID);
                             
                             $data['ordernumber'] = $orderNumber;
@@ -373,7 +378,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                 $this->View()->assign('template', 'frontend/divido_payment/404.tpl');
             }
         }
-        $this->debug('Return action', 'info');
+        DividoHelper::debug('Return action', 'info');
     }
 
     /**
@@ -512,425 +517,6 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         //create order on signed
         $this->respond(true, $message, false);
         return;
-    }
-
-    /**
-     * HELPERS
-     */
-
-    /**
-     * Debug Helper
-     *
-     * @param mixed  $msg  A string with the message to debug.
-     * @param string $type PHP error level error warning.
-     *
-     * @return void
-     */
-     // sent to DividoHelper
-    public function debug($msg, $type = false)
-    {
-        $config = $this->container->get('shopware.plugin.cached_config_reader')
-            ->getByPluginName('DividoPayment');
-        $debug = $config['Debug'];
-
-        if (! $debug) {
-            return;
-        }
-
-        $this->log($msg, $type);
-    }
-
-    /**
-     * Log Helper
-     *
-     * @param mixed  $msg  String to be passed
-     * @param string $type Type to be used
-     *
-     * @return void
-     */
-     // sent to DividoHelper
-    public function log($msg, $type)
-    {
-
-        switch ($type) {
-            case 'warning':
-                Shopware()->PluginLogger()->warning("Warning: ". $msg);
-                break;
-            
-            case 'info':
-                Shopware()->PluginLogger()->info("Info: " . $msg);
-                break;
-
-            case 'error':
-                Shopware()->PluginLogger()->error("Error: " . $msg);
-                break;
-            
-            default:
-                Shopware()->PluginLogger()->info("Default info: " . $msg);
-                break;
-        }
-        return;
-    }
-
-
-    /**
-     * Create HMAC SIGNATURE
-     *
-     * @param string $payload      The payload for the signature
-     * @param string $sharedSecret The secret stored on divido portal
-     *
-     * @return $signature
-     */
-     // sent to DividoHelper
-    public function createSignature($payload, $sharedSecret)
-    {
-        $signature = base64_encode(
-            hash_hmac('sha256', $payload, $sharedSecret, true)
-        );
-        return $signature;
-    }
-
-    /**
-     * Create customer details for divido credit request
-     *
-     * @return Array
-     */
-
-     // sent to DividoHelper
-    public function getCustomerDetailsFormatted()
-    {
-        $this->debug('Formatting Customer Details');
-
-        $user = $this->getUser();
-
-        $billing = $user['billingaddress'];
-        $shipping = $user['shippingaddress'];
-
-        $billingAddress=$this->transformShopwareToDividoAddress($billing);
-        $shippingAddress=$this->transformShopwareToDividoAddress($shipping);
-        $country = $user['additional']['country']['countryiso'];
- 
-        $customerArray=array();
-        $customerArray['country']=$country;
-        $customerArray['customer'] = array(
-           'firstName' => $billing['firstname'],
-           'lastName' => $billing['lastname'],
-           'email' => $user['additional']['user']['email'],
-           'address'=> $billingAddress,
-           'shippingAddress'=> $shippingAddress,
-        );
-        $this->debug('CustomerArray:'.serialize($customerArray), 'info');
-
-        return $customerArray;
-    }
-
-    /**
-     * Helper Function to transform shopware address array to divido format
-     *
-     * @param array $shopwareAddressArray shopware address
-     *
-     * @return array
-     */
-     // sent to DividoHelper
-    public function transformShopwareToDividoAddress($shopwareAddressArray)
-    {
-        $this->debug('Add array:'.serialize($shopwareAddressArray), 'info');
-
-        $addressText = $shopwareAddressArray['buildingNumber'] .' '.
-         $shopwareAddressArray['street'] . ' ' .
-         $shopwareAddressArray['city'] . ' ' .
-         $shopwareAddressArray['zipcode'];
-         
-        $dividoAddressArray = array();
-        $dividoAddressArray['postcode']=$shopwareAddressArray['zipcode'];
-        $dividoAddressArray['street']=$shopwareAddressArray['street'];
-        $dividoAddressArray['flat']=$shopwareAddressArray['flat'];
-        $dividoAddressArray['buildingNumber']
-            = $shopwareAddressArray['buildingNumber'];
-        $dividoAddressArray['buildingName']=$shopwareAddressArray['buildingName'];
-        $dividoAddressArray['town']=$shopwareAddressArray['city'];
-        $dividoAddressArray['text']=$addressText;
-
-        return $dividoAddressArray;
-    }
-
-    /**
-     * Create order detail for divido credit request
-     *
-     * @param array $shopwareBasketArray The array from shopwares basket
-     *
-     * @return void
-     */
-     // sent to DividoHelper
-    public function getOrderProducts($shopwareBasketArray)
-    {
-        $dividoProductsArray = array();
-        //Add tax
-        $dividoProductsArray['1']['name']='Shipping';
-        $dividoProductsArray['1']['quantity']='1';
-        $dividoProductsArray['1']['price']=$shopwareBasketArray['sShippingcosts'];
-        $i=2;
-            
-        foreach ($shopwareBasketArray['content'] as $id => $product) {
-            $dividoProductsArray[$i]['name']     = $product['articlename'];
-            $dividoProductsArray[$i]['quantity'] = $product['quantity'];
-            $dividoProductsArray[$i]['price']    = $product['price'];
-            if ($product['modus'] == '0') {
-                $dividoProductsArray[$i]['plans']
-                = $product['additional_details']['attributes']['core']->get('divido_finance_plans');
-            }
-            $i++;
-        }
-
-        return $dividoProductsArray;
-    }
-
-    /**
-     * Helper function to grab data for credit request
-     *
-     * @param array $shopwareBasketArray passed in array
-     *
-     * @return void
-     */
-     // sent to DividoHelper
-    public function getOrderDetails($shopwareBasketArray)
-    {
-        $formattedArray = array();
-        $formattedArray['currency']  = $this->getCurrencyShortName();
-        $formattedArray['amount']    = $this->getAmount();
-        $formattedArray['reference'] = $this->getOrderNumber();
-        return $formattedArray;
-    }
-
-    /**
-     * Work out the total deposit amount from  the percentage and round it
-     *
-     * @param float $total   total of the order
-     * @param float $deposit deposit amount
-     *
-     * @return float
-     */
-     // sent to DividoHelper
-    public function getDepositAmount($total, $deposit)
-    {
-        $depositPercentage = $deposit / 100;
-        return round($depositPercentage * $total, 2);
-    }
-
-    /**
-     * Helper to grab the plugin configuration
-     *
-     * @return array
-     */
-     // sent to DividoHelper
-    public function getDividoConfig()
-    {
-
-        $config = $this->container
-            ->get('shopware.plugin.cached_config_reader')
-            ->getByPluginName('DividoPayment');
-
-        return $config;
-    }
-
-    /**
-     * Helper to grab api key
-     *
-     * @return string
-     */
-     // sent to DividoHelper
-    public function getDividoApiKey()
-    {
-        $config=$this->getDividoConfig();
-        return $config['Api Key'];
-    }
-
-    /**
-     * Helper to grab debug status
-     *
-     * @return bool
-     */
-     // sent to DividoHelper
-    public function getDividoDebug()
-    {
-        $config=$this->getDividoConfig();
-        return $config['Debug'];
-    }
-
-    /**
-     * Helper to grab checkout title
-     *
-     * @return string
-     */
-     // sent to DividoHelper
-    public function getDividoTitle()
-    {
-        $config=$this->getDividoConfig();
-        return $config['Title'];
-    }
-
-    /**
-     * Helper to grab description
-     *
-     * @return string
-     */
-     // sent to DividoHelper
-    public function getDividoDescription()
-    {
-        $config=$this->getDividoConfig();
-        return $config['Description'];
-    }
-    /**
-     * Helper to grab shared secret value
-     *
-     * @return string
-     */
-     // sent to DividoHelper
-    public function getDividoSharedSecret()
-    {
-        $config=$this->getDividoConfig();
-        return $config['Shared Secret'];
-    }
-    /**
-     * Helper to grab cart threshold value
-     *
-     * @return int
-     */
-     // sent to DividoHelper
-    public function getDividoCartThreshold()
-    {
-        $config=$this->getDividoConfig();
-        return $config['Cart Threshold'];
-    }
-
-    /**
-     * Respond function
-     *
-     * @param boolean $ok          Good request
-     * @param string  $message     Message recieved
-     * @param boolean $bad_request bad request
-     *
-     * @return void
-     */
-     // sent to DividoHelper
-    public function respond($ok = true, $message = '', $bad_request = false)
-    {
-        
-        Shopware()->Plugins()->Controller()->ViewRenderer()->setNoRender();
-
-        $this->debug('RESPOND ATTEMPT');
-        if ($ok) {
-            $code = 200;
-        } elseif ($bad_request) {
-            $code = 400;
-        } else {
-            $code = 500;
-        }
-
-        $status = $ok ? 'ok' : 'error';
-
-        $response = array(
-            'status'           => $status,
-            'message'          => $message,
-            'platform'         => 'Shopware',
-            'plugin_version'   => self::DIVIDO_PLUGIN_VERSION,
-        );
-
-        $body = json_encode(
-            $response,
-            JSON_PRETTY_PRINT |
-            JSON_HEX_TAG |
-            JSON_HEX_APOS |
-            JSON_HEX_QUOT |
-            JSON_HEX_AMP
-        );
-
-        $this->Response()->clearHeaders()
-            ->clearRawHeaders()
-            ->clearBody();
-
-        $this->Response()->setBody($body);
-        $this->Response()->setHeader('Content-type', 'application/json', true);
-        $this->Response()->setHttpResponseCode($code);
-        
-        return $this->Response();
-    }
-
-    /**
-     * Selects order id by transaction id.
-     *
-     * @param integer $transactionId corresponding transaction id
-     *
-     * @return order id (integer)
-     */
-     // sent to DividoHelper
-    protected function getOrderId($transactionId)
-    {
-        $sql = 'SELECT id FROM s_order WHERE transactionID=?';
-        $orderId = Shopware()->Db()->fetchOne($sql, array($transactionId));
-        return $orderId;
-    }
-
-    /**
-     * Removes Divido session based on id.
-     *
-     * @param integer $sessionId corresponding divido session id
-     *
-     * @return success (boolean)
-     */
-     // sent to DividoHelper
-    protected function removeDividoSessionById($sessionId){
-        $session_delete_sql = "DELETE FROM `s_divido_sessions` WHERE `id`=? LIMIT 1";
-        $success = Shopware()->Db()->query($session_delete_sql, [$sessionId]);
-        return $success;
-    }
-
-    /**
-     * Removes Divido sessions based on Order Number.
-     *
-     * @param integer $orderNumber corresponding order number
-     *
-     * @return success (boolean)
-     */
-     // sent to DividoHelper
-    protected function removeDividoSessionsByOrderNumber($orderNumber){
-        $session_delete_sql = "DELETE FROM `s_divido_sessions` WHERE `orderID`=? LIMIT 1";
-        $success = Shopware()->Db()->query($session_delete_sql, [$orderNumber]);
-        return $success;
-    }
-
-    /**
-     * Generate an order based on the session data stored in the s_divido_sessions table
-     * 
-     * @param string $transactionId The ID generated when making a Divido Credit Request
-     * @param array $session The session information stored in `s_divido_sessions` table `data` column
-     * 
-     * @return orderNumber (string) The order number of the new Order stored in s_order
-     */
-     // sent to DividoSession model
-    protected function createOrder($transactionId, $token, $session){
-        $basket = $session['sBasket'];
-        $order = Shopware()->Modules()->Order();
-        $order->sUserData = $session['sUserData'];
-        $order->sComment = "";
-        $order->sBasketData = $basket;
-        $order->sAmount = $basket['sAmount'];
-        $order->sAmountWithTax = 
-            !empty($basket['AmountWithTaxNumeric']) ? $basket['AmountWithTaxNumeric'] : $basket['AmountNumeric'];
-        $order->sAmountNet = $basket['AmountNetNumeric'];
-        $order->sShippingcosts = $basket['sShippingcosts'];
-        $order->sShippingcostsNumeric = $basket['sShippingcostsWithTax'];
-        $order->sShippingcostsNumericNet = $basket['sShippingcostsNet'];
-        $order->bookingId = $transactionId;
-        $order->dispatchId = Shopware()->Session()->sDispatch;
-        $order->sNet = empty($session['sUserData']['additional']['charge_vat']);
-        $order->uniqueID = $token;
-        $order->deviceType = $this->Request()->getDeviceType();
-        
-        $order->sCreateTemporaryOrder();
-        $orderNumber = $order->sSaveOrder();
-        
-        return $orderNumber;
     }
 
     /**

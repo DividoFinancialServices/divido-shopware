@@ -89,7 +89,7 @@ class DividoSession extends ModelEntity
      * Array of the keys of fields we want to retain in the divido session table in
      * case the session times out before the customer completes the signing process
      */
-    private $retained_array_keys = array(
+    private $retained_session_keys = array(
         'sUserData',
         'sBasket',
         'sAmount',
@@ -98,6 +98,11 @@ class DividoSession extends ModelEntity
     );
 
     private const session_table = 's_sessions';
+
+    /**
+     * Compression method for session data. Currently either SERIAL or JSON
+     */
+    private const compression_method = 'SERIAL';
 
     /**
      * @return int
@@ -178,7 +183,7 @@ class DividoSession extends ModelEntity
     public function setDataFromShopwareSession(){
         $session_data = Shopware()->Session()->sOrderVariables;
         $data = [];
-        foreach($this->retained as $key){
+        foreach($this->retained_session_keys as $key){
             if(isset($session_data[$key]))
                $data[$key] = $session_data[$key];
         }
@@ -278,7 +283,7 @@ class DividoSession extends ModelEntity
             $this->orderNumber = $session[0]['order_number'];
             $this->transactionID = $session[0]['transactionID'];
             $this->key = $session[0]['key'];
-            $this->data = unserialize($session[0]['data']);
+            $this->data = $this->decompress($session[0]['data']);
             $this->plan = $session[0]['plan'];
             $this->deposit = $session[0]['deposit'];
             $this->ip_address = $session[0]['ip_address'];
@@ -307,7 +312,7 @@ class DividoSession extends ModelEntity
             ->setParameter(1,$this->transactionID)
             ->setParameter(2,$this->getKey())
             ->setParameter(3,$this->getStatus())
-            ->setParameter(4,serialize($this->data))
+            ->setParameter(4,$this->compress($this->data))
             ->setParameter(5,$this->plan)
             ->setParameter(6,$this->deposit)
             ->setParameter(7,$ip_address)
@@ -356,7 +361,7 @@ class DividoSession extends ModelEntity
         if(!is_null($this->data)){
             $update_session_query
                 ->set('`data`',':data')
-                ->setParameter(':data', serialize($this->data));
+                ->setParameter(':data', $this->compress($this->data));
         }
 
         if(!is_null($this->plan)){
@@ -447,7 +452,7 @@ class DividoSession extends ModelEntity
             return false;
         }
         $update_session_query = $connection->createQueryBuilder();
-        $update_session_query->update('s_order');
+        $update_session_query->update(self::session_table);
 
         foreach($order as $key=>$value){
             if($key == $reference_key){
@@ -459,5 +464,39 @@ class DividoSession extends ModelEntity
         }
 
         return $add_session_query->execute();
+    }
+
+    /**
+     * Wrapper function to overwrite if you wanted to,
+     * say json_encode the data instead
+     */
+    protected function compress($data){
+        switch(self::compression_method){
+            case 'JSON':
+                $return = json_encode($data);
+                break;
+            case 'SERIAL':
+            default:
+                $return = serialize($data);
+                break;
+        }
+        return $return;
+    }
+
+    /**
+     * Wrapper function to overwrite if you wanted to,
+     * say json_unencode the data instead
+     */
+    protected function decompress($data){
+        switch(self::compression_method){
+            case 'JSON':
+                $return = json_decode($data);
+                break;
+            case 'SERIAL':
+            default:
+                $return = unserialize($data);
+                break;
+        }
+        return $return;
     }
 }
