@@ -22,6 +22,9 @@ use Shopware\Components\CSRFWhitelistAware;
 //Include Divido PHP SDK
 require_once __DIR__ . '../../../lib/Divido.php';
 
+require_once __DIR__ . '../../../lib/v2/do.php';
+
+
 /**
  * Divido Payment Service - Webhook Response
  *
@@ -151,7 +154,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                 $_POST['divido_deposit'],
                 $amount
             )
-            : '';
+            : 0;
         
         $token = $service->createPaymentToken(
             $amount,
@@ -292,9 +295,6 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      */
     public function returnAction()
     {
-        error_reporting(E_ALL);
-        ini_set('display_errors', 1);
-
         $paymentService = $this->container->get('divido_payment.divido_payment_service');
         $orderService = $this->container->get('divido_payment.divido_order_service');
         
@@ -350,7 +350,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                             );
 
                             $session->setOrderNumber($orderNumber);
-                            $session->update();
+                            $session->update($connection);
 
                             /*
                             /   Close the open session, in case we create an order with the same
@@ -360,6 +360,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                         }else{
                             $this->View()->assign('error', 'Could not create order');
                             $this->View()->assign('template', 'frontend/divido_payment/error.tpl');
+                            return;
                         }
                     }else{
                         $data['ordernumber'] = $session->getOrderNumber();

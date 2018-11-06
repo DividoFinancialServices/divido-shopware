@@ -8,8 +8,13 @@ class DividoOrderService
 {
     public function retrieveOrderFromDb($id, $connection){
         $get_order_query = $connection->createQueryBuilder();
-        $order_sql = "SELECT * FROM `s_orders` WHERE `id`= :id LIMIT 1";
-        $order = $get_order_query->fetchAll($order_sql,[':id' => $id]);
+        $get_order_query
+            ->select('*')
+            ->from('s_order')
+            ->where('`id` = :id')
+            ->setParameter(':id', $id)
+            ->setMaxResult(1);
+        $order = $get_order_query->execute()->fetchAll();
 
         if(isset($order[0])){
             return $order[0];
@@ -25,18 +30,35 @@ class DividoOrderService
         return $orderNumber;
     }
 
+    /**
+     * Function to get the ID based on the transactionID and
+     * temporaryID in the database. 
+     *
+     * @param string $transactionID
+     * @param string $key
+     * @param $connection
+     * @return void
+     */
     public function getId($transactionID, $key, $connection){
-        $criteria = [
-            "transactionID" => $transactionID,
-            "temporaryID" => $key
-        ];
-        $orders = $this->findOrders($criteria,$connection);
-        return $orders[0]['id'];
+        $get_id_query = $connection->createQueryBuilder();
+        $get_id_query
+            ->select('id')
+            ->from('s_order')
+            ->where('`transactionID` = :transactionId')
+            ->andWhere('`temporaryID` = :temporaryId')
+            ->setParameter(':transactionId', $transactionID)
+            ->setParameter(':temporaryId', $key)
+            ->setMaxResults(1);
+        $orders = $get_id_query->execute()->fetchAll($order_sql);
+
+        if(isset($orders)){
+          return $orders[0]['id'];
+        }else return false;
     }
 
     public function updateOrder($connection, $order, $reference_key){
         if(!isset($order[$reference_key])){
-            DividoHelper::Debug('Could not update session: Reference key not set or does not exist');
+            DividoHelper::debug('Could not update order: Reference key not set or does not exist');
             return false;
         }
         $update_order_query = $connection->createQueryBuilder();
@@ -56,13 +78,18 @@ class DividoOrderService
 
     public function findOrders($criteria, $connection){
         $find_order_query = $connection->createQueryBuilder();
-        $find_order_query->select('s_order');
+        $find_order_query->select('*')->from('s_order');
         
-        foreach($criteria as $key=>$value)
-            $find_order_query->where("`{$key}`= :{$key}")->setParameter(":{$key}",$value);
-        
-        $find_order_query->execute();
-        return $find_order_query->fetch_all();
+        $first = true;
+        foreach($criteria as $key=>$value){
+            if($first){
+                $find_order_query->where("`{$key}`= :{$key}");
+                $first = false;
+            }else $find_order_query->andWhere("`{$key}`= :{$key}");
+
+            $find_order_query->setParameter(":{$key}",$value);
+        }
+        return $find_order_query->execute()->fetch_all();
     }
 
     public function persistOrderAttributes($id, $attributes){

@@ -258,6 +258,8 @@ class DividoHelper
      */
     public function getDepositAmount($total, $deposit)
     {
+        if(empty($deposit)) return 0;
+        
         $depositPercentage = $deposit / 100;
         return round($depositPercentage * $total, 2);
     }
