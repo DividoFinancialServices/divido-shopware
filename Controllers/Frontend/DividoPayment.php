@@ -1,4 +1,7 @@
 <?php
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 /**
  * Divido Payment Service - Webhook Response
  *
@@ -17,13 +20,12 @@ use DividoPayment\Components\DividoPayment\DividoPaymentService;
 use DividoPayment\Components\DividoPayment\DividoRequestService;
 use DividoPayment\Components\DividoPayment\DividoOrderService;
 use DividoPayment\Components\DividoPayment\DividoHelper;
+use DividoPayment\Models\Request;
 use Shopware\Components\CSRFWhitelistAware;
 
+require_once __DIR__ . '../../../vendor/autoload.php';
 //Include Divido PHP SDK
-require_once __DIR__ . '../../../lib/Divido.php';
-
-require_once __DIR__ . '../../../lib/v2/do.php';
-
+//require_once __DIR__ . '../../../lib/Divido.php';
 
 /**
  * Divido Payment Service - Webhook Response
@@ -144,7 +146,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $apiKey = DividoHelper::getApiKey();
 
         $user = $this->getUser();
-        $customer = DividoHelper::getCustomerDetailsFormatted($user);
+        $customer = DividoHelper::getFormattedCustomerDetails($user);
         
         $basket = $this->getBasket();
         $amount = $this->getAmount();
@@ -160,15 +162,11 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             $amount,
             $user['additional']['user']['customernumber']
         );
-
-        \Divido::setMerchant($apiKey);
         
         $planId = filter_var($_POST['divido_plan'], FILTER_SANITIZE_EMAIL);
-        /* Needed?
         $checkout_url= $router->assemble(
             ['action' => 'cancel', 'forceSecure' => true]
         );
-        */
         $session = new \DividoPayment\Models\DividoSession;
         $session->setKey($token);
         $session->setStatus(self::PAYMENTSTATUSOPEN);
@@ -187,43 +185,37 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             'amount' => $amount
         ];
         
+        $response_url = $router->assemble(['action' => 'webhook', 'forceSecure' => true]);
         $redirect_url = $router->assemble(['action' => 'return', 'forceSecure' => true]);
-        
-        $dividoRequest = new DividoRequestService;
-        $dividoRequest = $dividoRequest
-            ->setRequestField('merchant', $apiKey)
-            ->setRequestField('deposit', $deposit)
-            ->setRequestField('finance', $planId)
-            ->setRequestField('language', $language)
-            ->setRequestField('metadata', $metadata)
-            ->setRequestField('products', DividoHelper::getOrderProducts($basket))
-            ->setRequestField(
-                'response_url', 
-                $router->assemble(['action' => 'webhook', 'forceSecure' => true])
-            )
-            ->setRequestField(
-                'redirect_url', 
-                $redirect_url."?sid={$sessionId}&token={$token}"
-            )
-            ->setRequestField('currency', $this->getCurrencyShortName())
-            ->setRequestField('amount', $amount)
-            ->setRequestField('reference', $this->getOrderNumber())
-            ->setRequestFieldsByArray($customer);
 
-        $response = $dividoRequest->makeRequest();
-
+        $request = new Request();
+        $request->setFinancePlanId($planId);
+        //$request->setMerchantChannelId($merchantChannelId);
+        $request->setApplicants(DividoRequestService::setApplicantsFromUser($user));
+        $request->setOrderItems(DividoRequestService::setOrderItemsFromBasket($basket));
+        $request->setDepositAmount($deposit*100);
+        $request->setDepositPercentage($_POST['divido_deposit']/100);
+        $request->setUrls([
+            'merchant_redirect_url' => $redirect_url ."?sid={$sessionId}&token={$token}",
+            'merchant_checkout_url' => $checkout_url,
+            'merchant_response_url' => $response_url
+        ]);
+        $response = DividoRequestService::makeRequest($request);
+        var_dump($response);
         // Create divido session if request is okay and forward to the divido payment platform
-        if ($response->status == 'ok') {
-            $session->setTransactionID($response->id);
+        if (isset($response->error)){
+            DividoHelper::debug(
+                $response->message."(".$response->context->property.": ".$response->context->more.")",
+                'error'
+            );
+            $this->forward('cancel');
+        }else{
+            $payload = $response->data;
+
+            $session->setTransactionID($payload->id);
             $session->update($connection);
             
-            $this->redirect($response->url);
-        } else {
-            if ($response->status === 'error') {
-                // Log the error
-                $this->forward('cancel');
-            }
-            $this->forward('cancel');
+            $this->redirect($payload->urls->merchant_success_redirect_url);
         }
     }
 
@@ -246,7 +238,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $description = DividoHelper::getDescription();
 
         $user = $this->getUser();
-        $customer = DividoHelper::getCustomerDetailsFormatted($user);
+        $customer = DividoHelper::getFormattedCustomerDetails($user);
 
         $displayWarning = [];
         $displayFinance = false;

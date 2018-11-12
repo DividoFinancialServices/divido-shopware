@@ -161,35 +161,6 @@ class DividoHelper
     }
 
     /**
-     * Create customer details for credit request
-     *
-     * @return Array
-     */
-    public function getCustomerDetailsFormatted($user){
-        self::debug('Formatting Customer Details');
-
-        $billing = $user['billingaddress'];
-        $shipping = $user['shippingaddress'];
-
-        $billingAddress=self::formatShopwareAddress($billing);
-        $shippingAddress=self::formatShopwareAddress($shipping);
-        $country = $user['additional']['country']['countryiso'];
- 
-        $customerArray=array();
-        $customerArray['country']=$country;
-        $customerArray['customer'] = array(
-           'firstName' => $billing['firstname'],
-           'lastName' => $billing['lastname'],
-           'email' => $user['additional']['user']['email'],
-           'address'=> $billingAddress,
-           'shippingAddress'=> $shippingAddress,
-        );
-        self::debug('CustomerArray:'.serialize($customerArray), 'info');
-
-        return $customerArray;
-    }
-
-    /**
      * Helper Function to transform shopware address array to divido format
      *
      * @param array $shopwareAddressArray shopware address
@@ -206,18 +177,18 @@ class DividoHelper
          $shopwareAddressArray['zipcode'];
          
         $dividoAddressArray = array();
-        $dividoAddressArray['postcode']=$shopwareAddressArray['zipcode'];
-        $dividoAddressArray['street']=$shopwareAddressArray['street'];
-        $dividoAddressArray['flat']=$shopwareAddressArray['flat'];
+        $dividoAddressArray['postcode'] = $shopwareAddressArray['zipcode'];
+        $dividoAddressArray['street'] = $shopwareAddressArray['street'];
+        $dividoAddressArray['flat'] = $shopwareAddressArray['flat'];
         $dividoAddressArray['buildingNumber']
             = $shopwareAddressArray['buildingNumber'];
-        $dividoAddressArray['buildingName']=$shopwareAddressArray['buildingName'];
-        $dividoAddressArray['town']=$shopwareAddressArray['city'];
-        $dividoAddressArray['text']=$addressText;
+        $dividoAddressArray['buildingName'] = $shopwareAddressArray['buildingName'];
+        $dividoAddressArray['town'] = $shopwareAddressArray['city'];
+        $dividoAddressArray['text'] = $addressText;
 
         return $dividoAddressArray;
     }
-
+    
     /**
      * Create order detail for divido credit request
      *
@@ -285,6 +256,36 @@ class DividoHelper
             }
         }
         return $basket_plans;
+    }
+
+        /**
+     * Create customer details for credit request
+     *
+     * @return Array
+     */
+    public static function getFormattedCustomerDetails($user):array
+    {
+        self::debug('Formatting Customer Details');
+
+        $billing = $user['billingaddress'];
+        $shipping = $user['shippingaddress'];
+
+        $billingAddress = self::formatShopwareAddress($billing);
+        $shippingAddress = self::formatShopwareAddress($shipping);
+        $country = $user['additional']['country']['countryiso'];
+
+        $customerArray = array();
+        $customerArray['country'] = $country;
+        $customerArray['customer'] = array(
+            'firstName' => $billing['firstname'],
+            'lastName' => $billing['lastname'],
+            'email' => $user['additional']['user']['email'],
+            'address' => $billingAddress,
+            'shippingAddress' => $shippingAddress,
+        );
+        self::debug('CustomerArray:' . serialize($customerArray), 'info');
+
+        return $customerArray;
     }
 
     public function hmacSign(){
