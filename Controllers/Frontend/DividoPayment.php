@@ -1,7 +1,4 @@
 <?php
-
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 /**
  * Divido Payment Service - Webhook Response
  *
@@ -25,7 +22,6 @@ use Shopware\Components\CSRFWhitelistAware;
 
 require_once __DIR__ . '../../../vendor/autoload.php';
 //Include Divido PHP SDK
-//require_once __DIR__ . '../../../lib/Divido.php';
 
 /**
  * Divido Payment Service - Webhook Response
@@ -201,7 +197,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             'merchant_response_url' => $response_url
         ]);
         $response = DividoRequestService::makeRequest($request);
-        var_dump($response);
+        
         // Create divido session if request is okay and forward to the divido payment platform
         if (isset($response->error)){
             DividoHelper::debug(

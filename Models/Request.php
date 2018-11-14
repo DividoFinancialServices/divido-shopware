@@ -10,7 +10,7 @@ class Request
     private $currencyId = 'GBP';
     private $languageId = 'en';
     private $financePlanId = '';
-    private $merchantChannelId = 'aee53914-4c51-45b4-8a06-b9a2361637b1';
+    private $merchantChannelId = '';
     private $applicants = [];
     private $orderItems = [];
     private $depositAmount = '';

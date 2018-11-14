@@ -17,6 +17,8 @@ namespace DividoPayment\Subscriber;
 
 use Enlight\Event\SubscriberInterface;
 use DividoPayment\Components\DividoPayment\DividoPaymentService;
+use DividoPayment\Components\DividoPayment\DividoPlansService;
+use DividoPayment\Components\DividoPayment\DividoHelper;
 
 /**
  * Divido Payment Service  Class
@@ -60,36 +62,54 @@ class TemplateRegistration implements SubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            'Enlight_Controller_Action_PreDispatch' => 'onPreDispatch',
-               ];
+            'Enlight_Controller_Action_PreDispatch_Frontend_Index' => 'onPreDispatch',
+            'Enlight_Controller_Action_PostDispatchSecure_Frontend_Index' => 'onPostDispatchSecure',
+        ];
     }
 
     public function onPreDispatch(\Enlight_Controller_ActionEventArgs $args)
     {
-        $config = Shopware()->Container()->get('shopware.plugin.cached_config_reader')
-            ->getByPluginName('DividoPayment');
-        $apiKey = $config["Api Key"];
-        $key = preg_split("/\./", $apiKey);
-
-        $min_product_amount = (isset($config['Minimum Amount'])) ? $config['Minimum Amount'] : 0;
-        $args->getSubject()->View()->assign('min_product_amount', $min_product_amount);
-
-        if ($config['Small Price Widget']) {
-            $this->templateManager->addTemplateDir($this->pluginDirectory . '/Resources/views');
-            $args->getSubject()->View()->assign('apiKey', $key['0']);
-        }
-
-        if ($config['Widget Suffix']) {
-            $suffix='data-divido-suffix="'.strip_tags($config['Widget Suffix']).'"';
-            $this->templateManager->addTemplateDir($this->pluginDirectory . '/Resources/views');
-            $args->getSubject()->View()->assign('suffix', $suffix);
-        }
-
-        if ($config['Widget Prefix']) {
-            $prefix='data-divido-prefix="'.strip_tags($config['Widget Prefix']).'"';
-            $this->templateManager->addTemplateDir($this->pluginDirectory . '/Resources/views');
-            $args->getSubject()->View()->assign('prefix', $prefix);
-        }
         return;
+    }
+
+    public function onPostDispatchSecure(\Enlight_Controller_ActionEventArgs $args)
+    {
+        if ($args->getSubject()->Request()->getActionName() == 'index'){
+            $product = $args->getSubject()->View()->sArticle;
+
+            $config = Shopware()->Container()->get('shopware.plugin.cached_config_reader')
+                ->getByPluginName('DividoPayment');
+
+            $min_product_amount = (isset($config['Minimum Amount'])) ? $config['Minimum Amount']*100 : 0;
+            $product_price = filter_var($product['price'], FILTER_SANITIZE_NUMBER_INT);
+            if($product_price > $min_product_amount){
+                $apiKey = $config["Api Key"];
+                $key = preg_split("/\./", $apiKey);
+                $args->getSubject()->View()->assign('apiKey', $key);
+                
+                $args->getSubject()->View()->assign('plans', implode(",", $plans_ids));
+
+                if ($config['Widget Suffix']) {
+                    $suffix = 'data-divido-suffix="' . strip_tags($config['Widget Suffix']) . '"';
+                    $args->getSubject()->View()->assign('suffix', $suffix);
+                }
+
+                if ($config['Widget Prefix']) {
+                    $prefix = 'data-divido-prefix="' . strip_tags($config['Widget Prefix']) . '"';
+                    $args->getSubject()->View()->assign('prefix', $prefix);
+                }
+
+                $plans = $product['divido_finance_plans'];
+                if(empty($plans)){
+                    $plans = DividoPlansService::updatePlans();
+                }
+                foreach($plans as $plan) $plans_ids[] = $plan->getId();
+                $args->getSubject()->View()->assign('plans', implode(",", $plans_ids));
+
+                $args->getSubject()->View()->assign('show_divido', true);
+            }else $args->getSubject()->View()->assign('show_divido', false);
+
+            $this->templateManager->addTemplateDir($this->pluginDirectory . '/Resources/views');
+        }
     }
 }

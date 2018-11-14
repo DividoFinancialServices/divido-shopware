@@ -3,7 +3,6 @@
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
-
         <service id="divido_payment.subscriber.templates" class="DividoPayment\Subscriber\UpdatePlans">
             <argument>%divido_payment.plugin_dir%</argument>
             <tag name="shopware.event_subscriber"/>
@@ -13,6 +12,9 @@
         </service>
         <service id="divido_payment.divido_order_service"
                  class="DividoPayment\Components\DividoPayment\DividoOrderService">
+        </service>
+        <service id="divido_payment.divido_plans_service"
+                 class="DividoPayment\Components\DividoPayment\DividoPlansService">
         </service>
         <!-- Register TemplateRegistration subscriber -->
         <service id="divido_payment.subscriber.template_registration" class="DividoPayment\Subscriber\TemplateRegistration">

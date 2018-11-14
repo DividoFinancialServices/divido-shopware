@@ -22,6 +22,7 @@ use Shopware\Components\Plugin\Context\DeactivateContext;
 use Shopware\Components\Plugin\Context\InstallContext;
 use Shopware\Components\Plugin\Context\UninstallContext;
 use Shopware\Models\Payment\Payment;
+use DividoPayment\Components\DividoPayment\DividoPlansService;
 
 /**
  * Divido Payment

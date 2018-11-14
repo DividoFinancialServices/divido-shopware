@@ -1,10 +1,10 @@
 {extends file="parent:frontend/detail/content/buy_container.tpl"}
 
 {block name="frontend_detail_index_buybox"}
+Hello
 {$smarty.block.parent}
-
-{if {$sArticle.price|replace:',':'.'} >= $min_product_amount }
-<!-- BEGIN DIVIDO -->
+<!-- Loading -->
+{if $show_divido }
       <script> 
         var dividoKey = "{$apiKey}";
       </script>
@@ -13,27 +13,26 @@
          display:inline-block;
          position:relative;
          top:2px;
-         } 
-         #divido-widget{
+       } 
+       #divido-widget{
            padding-bottom:5px;
-         }
-       </style>
+       }
+      </style>
 
-    <script src="https://cdn.divido.com/calculator/v2.1/production/js/template.divido.js"></script>
-            <div
-            id="divido-widget"
-              data-divido-widget
-              data-divido-mode="popup"
-              data-divido-title-logo
-              data-divido-plans="{$sArticle.divido_finance_plans|replace:'|':','}"
-              {$prefix}
-              {$suffix}
-              data-divido-amount="{$sArticle.price|replace:',':'.'}"
-              data-divido-apply="true"
-              data-divido-apply-label="Apply Now"
-              >
-            </div>
-<!-- END DIVIDO -->
+      <script src="https://cdn.divido.com/calculator/v2.1/production/js/template.divido.js"></script>
+      <div
+        id="divido-widget"
+        data-divido-widget
+        data-divido-mode="popup"
+        data-divido-title-logo
+        data-divido-plans="{$plans}"
+        {$prefix}
+        {$suffix}
+        data-divido-amount="{$sArticle.price|replace:',':'.'}"
+        data-divido-apply="true"
+        data-divido-apply-label="Apply Now"
+      >
+      </div>
 {/if}
 {/block}
 
