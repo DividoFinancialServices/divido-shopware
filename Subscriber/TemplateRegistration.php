@@ -102,13 +102,13 @@ class TemplateRegistration implements SubscriberInterface
                     $prefix = 'data-divido-prefix="' . strip_tags($config['Widget Prefix']) . '"';
                     $view->assign('prefix', $prefix);
                 }
-
-                $plans = $product['divido_finance_plans'];
+                var_dump($product['divido_finance_plans']);
+                $plans = str_replace("|",",",$product['divido_finance_plans']);
                 if(empty($plans)){
                     $plans = DividoPlansService::updatePlans();
-                }
-                foreach($plans as $plan) $plans_ids[] = $plan->getId();
-                $view->assign('plans', implode(",", $plans_ids));
+                    foreach ($plans as $plan) $plans_ids[] = $plan->getId();
+                    $view->assign('plans', implode(",", $plans_ids));
+                }else $view->assign('plans',$plans);
 
                 $view->assign('show_divido', true);
             }else $view->assign('show_divido', false);
