@@ -62,20 +62,24 @@ class TemplateRegistration implements SubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            'Enlight_Controller_Action_PreDispatch_Frontend_Index' => 'onPreDispatch',
-            'Enlight_Controller_Action_PostDispatchSecure_Frontend_Index' => 'onPostDispatchSecure',
+            'Enlight_Controller_Action_PreDispatch_Frontend' => 'onPreDispatch',
+            'Enlight_Controller_Action_PostDispatchSecure_Frontend' => 'onPostDispatchSecure',
         ];
     }
 
     public function onPreDispatch(\Enlight_Controller_ActionEventArgs $args)
     {
+        $args->get('subject')->View()->addTemplateDir($this->pluginDirectory . '/Resources/views');
         return;
     }
 
     public function onPostDispatchSecure(\Enlight_Controller_ActionEventArgs $args)
     {
-        if ($args->getSubject()->Request()->getActionName() == 'index'){
-            $product = $args->getSubject()->View()->sArticle;
+        $controller = $args->get('subject');
+        $view = $controller->View();
+        
+        if ($controller->Request()->getActionName() == 'index'){
+            $product = $view->sArticle;
 
             $config = Shopware()->Container()->get('shopware.plugin.cached_config_reader')
                 ->getByPluginName('DividoPayment');
@@ -85,18 +89,18 @@ class TemplateRegistration implements SubscriberInterface
             if($product_price > $min_product_amount){
                 $apiKey = $config["Api Key"];
                 $key = preg_split("/\./", $apiKey);
-                $args->getSubject()->View()->assign('apiKey', $key);
+                $view->assign('apiKey', $key[0]);
                 
-                $args->getSubject()->View()->assign('plans', implode(",", $plans_ids));
+                $view->assign('plans', implode(",", $plans_ids));
 
                 if ($config['Widget Suffix']) {
                     $suffix = 'data-divido-suffix="' . strip_tags($config['Widget Suffix']) . '"';
-                    $args->getSubject()->View()->assign('suffix', $suffix);
+                    $view->assign('suffix', $suffix);
                 }
 
                 if ($config['Widget Prefix']) {
                     $prefix = 'data-divido-prefix="' . strip_tags($config['Widget Prefix']) . '"';
-                    $args->getSubject()->View()->assign('prefix', $prefix);
+                    $view->assign('prefix', $prefix);
                 }
 
                 $plans = $product['divido_finance_plans'];
@@ -104,12 +108,10 @@ class TemplateRegistration implements SubscriberInterface
                     $plans = DividoPlansService::updatePlans();
                 }
                 foreach($plans as $plan) $plans_ids[] = $plan->getId();
-                $args->getSubject()->View()->assign('plans', implode(",", $plans_ids));
+                $view->assign('plans', implode(",", $plans_ids));
 
-                $args->getSubject()->View()->assign('show_divido', true);
-            }else $args->getSubject()->View()->assign('show_divido', false);
-
-            $this->templateManager->addTemplateDir($this->pluginDirectory . '/Resources/views');
+                $view->assign('show_divido', true);
+            }else $view->assign('show_divido', false);
         }
     }
 }
