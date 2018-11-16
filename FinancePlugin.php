@@ -1,11 +1,11 @@
 <?php
 /**
- * Divido Payment Service
+ * Payment Service
  *
  * PHP version 5.5
  *
  * @category  Payment_Gateway
- * @package   DividoPayment
+ * @package   FinancePlugin
  * @author    Original Author <jonthan.carter@divido.com>
  * @author    Another Author <andrew.smith@divido.com>
  * @copyright 2014-2018 Divido Financial Services
@@ -13,7 +13,7 @@
  * @link      http://github.com/DividoFinancialServices/divido-shopware
  * @since     File available since Release 1.0.0
  */
-namespace DividoPayment;
+namespace FinancePlugin;
 
 use Doctrine\ORM\Tools\SchemaTool;
 use Shopware\Components\Plugin;
@@ -22,15 +22,15 @@ use Shopware\Components\Plugin\Context\DeactivateContext;
 use Shopware\Components\Plugin\Context\InstallContext;
 use Shopware\Components\Plugin\Context\UninstallContext;
 use Shopware\Models\Payment\Payment;
-use DividoPayment\Components\DividoPayment\DividoPlansService;
+use FinancePlugin\Components\Finance\PlansService;
 
 /**
- * Divido Payment
+ * Finance Plugin
  *
  * PHP version 5.5
  *
  * @category  Payment_Gateway
- * @package   DividoPayment
+ * @package   FinancePlugin
  * @author    Original Author <jonthan.carter@divido.com>
  * @author    Another Author <andrew.smith@divido.com>
  * @copyright 2014-2018 Divido Financial Services
@@ -38,7 +38,7 @@ use DividoPayment\Components\DividoPayment\DividoPlansService;
  * @link      http://github.com/DividoFinancialServices/divido-shopware
  * @since     File available since Release 1.0.0
  */
-class DividoPayment extends Plugin
+class FinancePlugin extends Plugin
 {
     /**
      * Install context
@@ -54,14 +54,13 @@ class DividoPayment extends Plugin
          */
         $installer = $this->container->get('shopware.plugin_payment_installer');
         $options = [
-            'name' => 'divido_payment',
-            'description' => 'Divido payment',
-            'action' => 'DividoPayment',
+            'name' => 'finance_plugin',
+            'description' => 'Finance Plugin',
+            'action' => 'FinancePlugin',
             'active' => 1,
             'position' => 0,
             'additionalDescription' =>
-                '<img src="https://s3-eu-west-1.amazonaws.com/content.divido.com/images/logo-blue-75x23.png"/>' //
-                . '<div id="payment_desc">'
+                '<div id="payment_desc">'
                 . '  Finance your cart'
                 . '</div>'
         ];
@@ -69,42 +68,42 @@ class DividoPayment extends Plugin
         $service = $this->container->get('shopware_attribute.crud_service');
         $service->update(
             's_order_attributes',
-            'divido_deposit_value',
+            'deposit_value',
             'float',
             [
             'displayInBackend' => true,
-            'label' => 'Divido Deposit',
+            'label' => 'Finance Plugin',
             'supportText' => 'The value of the deposit taken',
             'helpText' => 'Deposit value'
             ]
         );
         $service->update(
             's_order_attributes',
-            'divido_finance_id',
+            'finance_id',
             'string',
             [
             'displayInBackend' => true,
-            'label' => 'Divido Finance',
+            'label' => 'Finance',
             'supportText' => 'The ID of the finance ',
-            'helpText' => 'Divido Finance ID'
+            'helpText' => 'Finance ID'
             ]
         );
 
         $em = $this->container->get('models');
         $schemaTool = new SchemaTool($em);
         $schemaTool->updateSchema(
-            [ $em->getClassMetadata(\DividoPayment\Models\Plan::class), $em->getClassMetadata(\DividoPayment\Models\DividoSession::class) ],
+            [ $em->getClassMetadata(\FinancePlugin\Models\Plan::class), $em->getClassMetadata(\FinancePlugin\Models\Session::class) ],
             true
         );
 
         $service->update(
             's_articles_attributes',
-            'divido_finance_plans',
+            'finance_plans',
             'multi_selection',
             [
-                'entity' => \DividoPayment\Models\Plan::class,
+                'entity' => \FinancePlugin\Models\Plan::class,
                 'displayInBackend' => true,
-                'label' => 'Divido Finance Plans',
+                'label' => 'Finance Plans',
                 'supportText' => 'The plans available to the merchant',
                 'helpText' => 'Finance Plans'
             ]
@@ -123,9 +122,9 @@ class DividoPayment extends Plugin
     public function uninstall(UninstallContext $context)
     {
         $service = $this->container->get('shopware_attribute.crud_service');
-        $service->delete('s_order_attributes', 'divido_finance_id');
-        $service->delete('s_order_attributes', 'divido_deposit_value');
-        $service->delete('s_articles_attributes', 'divido_finance_plans');
+        $service->delete('s_order_attributes', 'finance_id');
+        $service->delete('s_order_attributes', 'deposit_value');
+        $service->delete('s_articles_attributes', 'finance_plans');
         $this->setActiveFlag($context->getPlugin()->getPayments(), false);
     }
 

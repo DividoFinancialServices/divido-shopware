@@ -25,19 +25,19 @@
 {literal}
 <script>
 var mainCalcWidget = document.getElementsByClassName('dividoCalcWidget')[0];
-var dividoInputs = document.getElementsByClassName('divido-calculate');
-for(let k = 0; k < dividoInputs.length; k++){
-    let dividoInput = dividoInputs[k];
+var inputs = document.getElementsByClassName('divido-calculate');
+for(let k = 0; k < inputs.length; k++){
+    let input = inputs[k];
     var calcWidget = mainCalcWidget.cloneNode(true);
     calcWidget.setAttribute('id','dividoCalc'+k);
     calcWidget.style.display = 'block';
-    dividoInput.parentNode.insertBefore(calcWidget,dividoInput.nextSibling);
-    dividoInput.value = calcWidget.getAttribute('data-divido-amount');
-    if(dividoInput.classList.contains('divido-popup')){
+    input.parentNode.insertBefore(calcWidget,dividoInput.nextSibling);
+    input.value = calcWidget.getAttribute('data-divido-amount');
+    if(input.classList.contains('divido-popup')){
         calcWidget.setAttribute('data-divido-mode','popup');
         calcWidget.style.marginLeft = '50px';
     }
-    dividoInput
+    input
         .addEventListener("keyup",function(event){
             let input = event.target.value;
             if(input >= 250 && input<=25000){

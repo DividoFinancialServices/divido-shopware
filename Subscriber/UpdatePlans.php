@@ -1,10 +1,10 @@
 <?php
 
-namespace DividoPayment\Subscriber;
+namespace FinancePlugin\Subscriber;
 
 use Enlight\Event\SubscriberInterface;
-use DividoPayment\Models\Plan;
-use DividoPayment\Components\DividoPayment\DividoPlansService;
+use FinancePlugin\Models\Plan;
+use FinancePlugin\Components\Finance\PlansService;
 
 class UpdatePlans implements SubscriberInterface
 {
@@ -46,10 +46,10 @@ class UpdatePlans implements SubscriberInterface
 
     private function set_plans(){
         $config = Shopware()->Container()->get('shopware.plugin.cached_config_reader')
-            ->getByPluginName('DividoPayment');
+            ->getByPluginName('FinancePlugin');
         if(!empty($config["Api Key"]))
         {
-            $plans = DividoPlansService::updatePlans();
+            $plans = PlansService::updatePlans();
         }
     }
 }

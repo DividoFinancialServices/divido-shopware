@@ -1,11 +1,11 @@
 <?php
 /**
- * Divido Payment Service - Webhook Response
+ * Payment Service - Webhook Response
  *
  * PHP version 5.5
  *
  * @category  CategoryName
- * @package   DividoPayment
+ * @package   FinancePlugin
  * @author    Original Author <jonthan.carter@divido.com>
  * @author    Another Author <andrew.smith@divido.com>
  * @copyright 2014-2018 Divido Financial Services
@@ -13,21 +13,8 @@
  * @link      http://github.com/DividoFinancialServices/divido-shopware
  * @since     File available since Release 1.0.0
  */
-namespace DividoPayment\Components\DividoPayment;
+namespace FinancePlugin\Components\Finance;
 
-/**
- * Divido Payment Service Webhook Response
- *
- * PHP version 5.5
- *
- * @category  CategoryName
- * @package   DividoPayment
- * @author    Original Author <jonthan.carter@divido.com>
- * @copyright 2014-2018 Divido Financial Services
- * @license   GNU General Public License family
- * @link      http://github.com/DividoFinancialServices/divido-shopware
- * @since     File available since Release 1.0.0
- */
 class WebhookResponse
 {
     /**
@@ -38,42 +25,42 @@ class WebhookResponse
     public $event;
 
     /**
-     * Status Code returned - READY
+     * Status Code returned
      *
      * @var string
      */
     public $status;
 
     /**
-     * Customers Name - Toby
+     * Customers Name
      *
      * @var string
      */
     public $name;
 
     /**
-     * Customers last name - SMITH
+     * Customers last name
      *
      * @var string
      */
     public $lastname;
 
     /**
-     * Customer email address - email@divido.com
+     * Customer email address
      *
-     * @var string Customer email address - email@divido.com
+     * @var string Customer email address
      */
     public $email;
 
     /**
-     * Unique Identifier - 6118d492-7db3-47cb-8640-d84c1220ba0e
+     * Unique Identifier
      *
      * @var string
      */
     public $proposal;
 
     /**
-     * Unique Identifiers -  6118d492-7db3-47cb-8640-d84c1220ba0e
+     * Unique Identifiers
      *
      * @var string
      */

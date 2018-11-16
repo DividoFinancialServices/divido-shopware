@@ -1,16 +1,8 @@
 {
     "autoload": {
         "psr-4": {
-            "Divido\\MerchantSDK\\": "lib/v2/"
+            "Divido\\MerchantSDK\\": "lib/sdk/"
         }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Divido\\MerchantSDK\\Test\\": "tests/"
-        },
-        "classmap": [
-            "tests"
-        ]
     },
     "require": {
         "php": ">=5.6",

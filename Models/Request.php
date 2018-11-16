@@ -1,8 +1,8 @@
 <?php
 
-namespace DividoPayment\Models;
+namespace FinancePlugin\Models;
 
-use DividoPayment\Components\DividoPayment\DividoHelper;
+use FinancePlugin\Components\Finance\Helper;
 
 class Request
 {

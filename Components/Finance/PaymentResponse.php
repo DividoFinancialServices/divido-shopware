@@ -1,6 +1,6 @@
 <?php
 
-namespace DividoPayment\Components\DividoPayment;
+namespace FinancePlugin\Components\Finance;
 
 class PaymentResponse
 {

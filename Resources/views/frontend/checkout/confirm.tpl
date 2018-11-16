@@ -284,7 +284,7 @@
                                                     {block name='frontend_checkout_confirm_information_addresses_equal_panel_shipping'}
                                                         <div class="shipping--panel">
                                                             {block name='frontend_checkout_confirm_information_addresses_equal_panel_shipping_select_address'}
-                                                        {if $sUserData.additional.payment.name =="divido_payment"}
+                                                        {if $sUserData.additional.payment.name =="finance_plugin"}
 
                                              
                                                                 {else}

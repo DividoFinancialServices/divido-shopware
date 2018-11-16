@@ -3,30 +3,24 @@
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
-        <service id="divido_payment.subscriber.templates" class="DividoPayment\Subscriber\UpdatePlans">
-            <argument>%divido_payment.plugin_dir%</argument>
+        <service id="finance_plugin.subscriber.templates" class="FinancePlugin\Subscriber\UpdatePlans">
+            <argument>%finance_plugin.plugin_dir%</argument>
             <tag name="shopware.event_subscriber"/>
         </service>
-        <service id="divido_payment.divido_payment_service"
-                 class="DividoPayment\Components\DividoPayment\DividoPaymentService">
+        <service id="finance_plugin.payment_service"
+                 class="FinancePlugin\Components\Finance\PaymentService">
         </service>
-        <service id="divido_payment.divido_order_service"
-                 class="DividoPayment\Components\DividoPayment\DividoOrderService">
+        <service id="finance_plugin.order_service"
+                 class="FinancePlugin\Components\Finance\OrderService">
         </service>
-        <service id="divido_payment.divido_plans_service"
-                 class="DividoPayment\Components\DividoPayment\DividoPlansService">
+        <service id="finance_plugin.plans_service"
+                 class="FinancePlugin\Components\Finance\PlansService">
         </service>
         <!-- Register TemplateRegistration subscriber -->
-        <service id="divido_payment.subscriber.template_registration" class="DividoPayment\Subscriber\TemplateRegistration">
-            <argument>%divido_payment.plugin_dir%</argument>
+        <service id="finance_plugin.subscriber.template_registration" class="FinancePlugin\Subscriber\TemplateRegistration">
+            <argument>%finance_plugin.plugin_dir%</argument>
             <argument type="service" id="template"/>
             <tag name="shopware.event_subscriber"/>
         </service>
-        <!--
-        <service id="divido_payment.subscriber.model_subscriber" class="DividoPayment\Subscriber\ModelSubscriber">
-            <argument>%divido_payment.plugin_dir%</argument>
-            <tag name="doctrine.event_subscriber"/>
-        </service>
-        -->
     </services>
 </container>

@@ -1,10 +1,10 @@
 <?php
 
-namespace DividoPayment\Components\DividoPayment;
+namespace FinancePlugin\Components\Finance;
 
-use DividoPayment\Components\DividoPayment\DividoHelper;
+use FinancePlugin\Components\Finance\Helper;
 
-class DividoOrderService
+class OrderService
 {
     public function retrieveOrderFromDb($id, $connection){
         $get_order_query = $connection->createQueryBuilder();
@@ -25,7 +25,7 @@ class DividoOrderService
         $order->sCreateTemporaryOrder();
         $orderNumber = $order->sSaveOrder();
         if(!$orderNumber){
-            DividoHelper::Debug('Could not create order', 'warning');
+            Helper::Debug('Could not create order', 'warning');
         }
         return $orderNumber;
     }
@@ -58,7 +58,7 @@ class DividoOrderService
 
     public function updateOrder($connection, $order, $reference_key){
         if(!isset($order[$reference_key])){
-            DividoHelper::debug('Could not update order: Reference key not set or does not exist');
+            Helper::debug('Could not update order: Reference key not set or does not exist');
             return false;
         }
         $update_order_query = $connection->createQueryBuilder();

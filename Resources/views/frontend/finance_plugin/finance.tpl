@@ -11,12 +11,12 @@
     <script src="https://cdn.divido.com/calculator/v2.1/production/js/template.divido.js"></script>
   
     {if $displayForm}
-     <form id="dividoFinanceForm" action="{url controller='DividoPayment' action='direct'}" method="post" >
+     <form id="dividoFinanceForm" action="{url controller='FinancePlugin' action='direct'}" method="post" >
       <div
         data-divido-widget
         data-divido-prefix="finance for"
-        {$prefix}
-        {$suffix}
+        data-divido-prefix="{$prefix}"
+        data-divido-suffix="{$suffix}"
         data-divido-title-logo
         data-divido-amount="{$amount}"
         data-divido-apply="true"

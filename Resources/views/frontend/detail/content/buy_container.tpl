@@ -2,7 +2,7 @@
 
 {block name="frontend_detail_index_buybox"}
 {$smarty.block.parent}
-{if $show_divido }
+{if $show_widget }
   <script> 
     var dividoKey = "{$apiKey}";
   </script>
@@ -24,8 +24,8 @@
     data-divido-mode="popup"
     data-divido-title-logo
     data-divido-plans="{$plans}"
-    {$prefix}
-    {$suffix}
+    data-divido-prefix="{$prefix}"
+    data-divido-suffix="{$suffix}"
     data-divido-amount="{$sArticle.price|replace:',':'.'}"
     data-divido-apply="true"
     data-divido-apply-label="Apply Now"

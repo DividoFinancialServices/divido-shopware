@@ -1,7 +1,8 @@
 <?php
-namespace DividoPayment\Components\DividoPayment;
 
-class DividoHelper
+namespace FinancePlugin\Components\Finance;
+
+class Helper
 {
     /**
      * Log wrapper which checks to see if Debug is on in the
@@ -57,7 +58,7 @@ class DividoHelper
      * Create HMAC SIGNATURE
      *
      * @param string $payload      The payload for the signature
-     * @param string $sharedSecret The secret stored on divido portal
+     * @param string $sharedSecret The secret stored on the portal
      *
      * @return $signature
      */
@@ -80,7 +81,7 @@ class DividoHelper
         $config = Shopware()
             ->Container()
             ->get('shopware.plugin.cached_config_reader')
-            ->getByPluginName('DividoPayment');
+            ->getByPluginName('LendingPlatform');
 
         return $config;
     }
@@ -161,7 +162,7 @@ class DividoHelper
     }
 
     /**
-     * Helper Function to transform shopware address array to divido format
+     * Helper Function to transform shopware address array to plugin format
      *
      * @param array $shopwareAddressArray shopware address
      *
@@ -176,21 +177,21 @@ class DividoHelper
          $shopwareAddressArray['city'] . ' ' .
          $shopwareAddressArray['zipcode'];
          
-        $dividoAddressArray = array();
-        $dividoAddressArray['postcode'] = $shopwareAddressArray['zipcode'];
-        $dividoAddressArray['street'] = $shopwareAddressArray['street'];
-        $dividoAddressArray['flat'] = $shopwareAddressArray['flat'];
-        $dividoAddressArray['buildingNumber']
+        $addressArray = array();
+        $addressArray['postcode'] = $shopwareAddressArray['zipcode'];
+        $addressArray['street'] = $shopwareAddressArray['street'];
+        $addressArray['flat'] = $shopwareAddressArray['flat'];
+        $addressArray['buildingNumber']
             = $shopwareAddressArray['buildingNumber'];
-        $dividoAddressArray['buildingName'] = $shopwareAddressArray['buildingName'];
-        $dividoAddressArray['town'] = $shopwareAddressArray['city'];
-        $dividoAddressArray['text'] = $addressText;
+        $addressArray['buildingName'] = $shopwareAddressArray['buildingName'];
+        $addressArray['town'] = $shopwareAddressArray['city'];
+        $addressArray['text'] = $addressText;
 
-        return $dividoAddressArray;
+        return $addressArray;
     }
     
     /**
-     * Create order detail for divido credit request
+     * Create order detail for plugin credit request
      *
      * @param array $shopwareBasketArray The array from shopwares basket
      *
@@ -198,25 +199,25 @@ class DividoHelper
      */
     public function getOrderProducts($shopwareBasketArray)
     {
-        $dividoProductsArray = array();
+        $productsArray = array();
         //Add tax
-        $dividoProductsArray['1']['name']='Shipping';
-        $dividoProductsArray['1']['quantity']='1';
-        $dividoProductsArray['1']['price']=$shopwareBasketArray['sShippingcosts'];
-        $i=2;
+        $i=0;
             
         foreach ($shopwareBasketArray['content'] as $id => $product) {
-            $dividoProductsArray[$i]['name']     = $product['articlename'];
-            $dividoProductsArray[$i]['quantity'] = $product['quantity'];
-            $dividoProductsArray[$i]['price']    = $product['price'];
+            $productsArray[$i]['name']     = $product['articlename'];
+            $productsArray[$i]['quantity'] = $product['quantity'];
+            $productsArray[$i]['price']    = $product['price'];
             if ($product['modus'] == '0') {
-                $dividoProductsArray[$i]['plans']
-                = $product['additional_details']['attributes']['core']->get('divido_finance_plans');
+                $productsArray[$i]['plans']
+                = $product['additional_details']['attributes']['core']->get('finance_plans');
             }
             $i++;
         }
-
-        return $dividoProductsArray;
+        $productsArray[$i]['name'] = 'Shipping';
+        $productsArray[$i]['quantity'] = '1';
+        $productsArray[$i]['price'] = $shopwareBasketArray['sShippingcosts'];
+        
+        return $productsArray;
     }
 
     /** 
@@ -300,12 +301,12 @@ class DividoHelper
             $data = file_get_contents('php://input');
         }
 
-        self::debug('Shared Secret:'.$this->getDividoSharedSecret(),'info');
+        self::debug('Shared Secret:'.$this->getSharedSecret(),'info');
 
         $sharedSecret = self::getSharedSecret();
         if(!empty($sharedSecret))
         {
-            $callback_sign = $_SERVER['HTTP_X_DIVIDO_HMAC_SHA256'];
+            $callback_sign = $_SERVER['HTTP_X_DIVIDO_HMAC_SHA256']; /* TODO: Can this change?  */
 
             self::debug('Callback Sign: '.$callback_sign , 'info');
             self::debug('Callback DATA: '.$data,'info');
@@ -316,11 +317,16 @@ class DividoHelper
 
             if ( $callback_sign !== $sign ) {
                 self::debug('Hash error','error');
-                //$this->send_json( 'error', 'Hash error.' );
                 return false;
             }
         }
         return true;
+    }
+
+    public function getEnvironment($environment){
+        if(isset(Divido\MerchantSDK\Environment::$$environment)){
+            $environment == Divido\MerchantSDK\Environment::$$environment;
+        }else return false;
     }
 
 }

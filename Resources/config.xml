@@ -37,8 +37,8 @@
             <label lang="de">Display widget for products over a certain price?</label>
             <label lang="en">Display widget for products over a certain price?</label>
             <value>0</value>
-            <description lang="de">Only display the Divido widget if the product price is over the specified amount</description>
-            <description lang="en">Only display the Divido widget if the product price is over the specified amount</description>
+            <description lang="de">Only display the widget if the product price is over the specified amount</description>
+            <description lang="en">Only display the widget if the product price is over the specified amount</description>
         </element>
 
         <element required="true" type="text" scope="locale">

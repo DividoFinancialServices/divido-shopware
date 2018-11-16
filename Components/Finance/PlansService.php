@@ -1,13 +1,15 @@
 <?php
 
-namespace DividoPayment\Components\DividoPayment;
+namespace FinancePlugin\Components\Finance;
 
-use DividoPayment\Models\Plan;
-
+use FinancePlugin\Models\Plan;
+use Divido\MerchantSDK\Client;
+use Divido\MerchantSDK\Environment;
+use Divido\MerchantSDK\Handlers\ApiRequestOptions;
 
 require_once __DIR__ . '../../../vendor/autoload.php';
 
-class DividoPlansService
+class PlansService
 {
     /**
      * @var integer
@@ -18,7 +20,7 @@ class DividoPlansService
     public static function updatePlans():array{
         $recent_plans = self::getStoredPlans();
         if (empty($recent_plans)) {
-            $apiKey = DividoHelper::getApiKey();
+            $apiKey = Helper::getApiKey();
             if (!empty($apiKey)) {
                 $plans = self::getPlansFromSDK($apiKey);
                 self::storePlans($plans);
@@ -46,8 +48,8 @@ class DividoPlansService
     }
 
     public static function getPlansFromSDK(string $apiKey):array{
-        $sdk = new \Divido\MerchantSDK\Client($apiKey, \Divido\MerchantSDK\Environment::SANDBOX);
-        $requestOptions = (new \Divido\MerchantSDK\Handlers\ApiRequestOptions());
+        $sdk = new Client($apiKey, Environment::SANDBOX);
+        $requestOptions = (new ApiRequestOptions());
 
                 // Retrieve all finance plans for the merchant.
         $plans = $sdk->getAllPlans($requestOptions);

@@ -1,11 +1,11 @@
 <?php
 /**
- * Divido Payment Service
+ * Payment Service
  *
  * PHP version 5.5
  *
  * @category  CategoryName
- * @package   DividoPayment
+ * @package   FinancePlugin
  * @author    Original Author <jonthan.carter@divido.com>
  * @author    Another Author <andrew.smith@divido.com>
  * @copyright 2014-2018 Divido Financial Services
@@ -13,23 +13,9 @@
  * @link      http://github.com/DividoFinancialServices/divido-shopware
  * @since     File available since Release 1.0.0
  */
-namespace DividoPayment\Components\DividoPayment;
+namespace FinancePlugin\Components\Finance;
 
-/**
- * Divido Payment Service Class
- *
- * PHP version 5.5
- *
- * @category  CategoryName
- * @package   DividoPayment
- * @author    Original Author <jonthan.carter@divido.com>
- * @author    Another Author <andrew.smith@divido.com>
- * @copyright 2014-2018 Divido Financial Services
- * @license   GNU General Public License family
- * @link      http://github.com/DividoFinancialServices/divido-shopware
- * @since     File available since Release 1.0.0
- */
-class DividoPaymentService
+class PaymentService
 {
 
     /**
@@ -75,19 +61,19 @@ class DividoPaymentService
 
         $data = json_decode($request->getRawBody());
 
-        $dividoResponse = new WebhookResponse();
+        $webhookResponse = new WebhookResponse();
     
-        $dividoResponse->event       = $data->event;
-        $dividoResponse->status      = $data->status;
-        $dividoResponse->name        = $data->name;
-        $dividoResponse->email       = $data->email;
-        $dividoResponse->proposal    = $data->proposal;
-        $dividoResponse->application = $data->application;
-        $dividoResponse->signature   = $data->metadata->signature;
-        $dividoResponse->token       = $data->metadata->token;
-        $dividoResponse->amount      = $data->metadata->amount;
+        $webhookResponse->event       = $data->event;
+        $webhookResponse->status      = $data->status;
+        $webhookResponse->name        = $data->name;
+        $webhookResponse->email       = $data->email;
+        $webhookResponse->proposal    = $data->proposal;
+        $webhookResponse->application = $data->application;
+        $webhookResponse->signature   = $data->metadata->signature;
+        $webhookResponse->token       = $data->metadata->token;
+        $webhookResponse->amount      = $data->metadata->amount;
 
-        return $dividoResponse;
+        return $webhookResponse;
     }
 
     /**

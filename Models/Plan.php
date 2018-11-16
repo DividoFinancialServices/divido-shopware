@@ -1,6 +1,6 @@
 <?php
 
-namespace DividoPayment\Models;
+namespace FinancePlugin\Models;
 
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;

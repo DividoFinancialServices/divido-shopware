@@ -1,12 +1,16 @@
 <?php
 
-namespace DividoPayment\Components\DividoPayment;
+namespace FinancePlugin\Components\Finance;
 
-class DividoRequestService
+use Divido\MerchantSDK\Client;
+use Divido\MerchantSDK\Environment;
+use Divido\MerchantSDK\Models\Application;
+
+class RequestService
 {
 
     public static function setApplicantsFromUser(array $user):array{
-        DividoHelper::debug('setting request applicant');
+        Helper::debug('setting request applicant');
 
         $billing = $user['billingaddress'];
         $return = array(
@@ -14,7 +18,7 @@ class DividoRequestService
             'lastName' => $billing['lastname'],
             'email' => $user['additional']['user']['email']
         );
-        DividoHelper::debug('CustomerArray:' . serialize($return), 'info');
+        Helper::debug('CustomerArray:' . serialize($return), 'info');
 
         return [$return];
     }
@@ -30,7 +34,7 @@ class DividoRequestService
             if ($product['modus'] == '0') {
                 $row['plans'] = 
                     $product['additional_details']['attributes']['core']
-                        ->get('divido_finance_plans');
+                        ->get('finance_plans');
             }
             $productsArray[] = $row;
         }
@@ -38,14 +42,14 @@ class DividoRequestService
         return $productsArray;
     }
 
-    public static function makeRequest(\DividoPayment\Models\Request $request){
-        $apiKey = DividoHelper::getApiKey();
-        $sdk = new \Divido\MerchantSDK\Client(
+    public static function makeRequest(\FinancePlugin\Models\Request $request){
+        $apiKey = Helper::getApiKey();
+        $sdk = new Client(
             $apiKey,
-            \Divido\MerchantSDK\Environment::SANDBOX
+            Environment::SANDBOX
         );
 
-        $application = (new \Divido\MerchantSDK\Models\Application())
+        $application = (new Application())
             ->withCountryId($request->getCountryId())
             ->withCurrencyId($request->getCurrencyId())
             ->withLanguageId($request->getLanguageId())

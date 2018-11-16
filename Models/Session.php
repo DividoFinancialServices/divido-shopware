@@ -1,16 +1,16 @@
 <?php
 
-namespace DividoPayment\Models;
+namespace FinancePlugin\Models;
 
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
-use DividoPayment\Components\DividoPayment\DividoHelper;
+use FinancePlugin\Components\Finance\Helper;
 
 /**
  * @ORM\Table(name="s_sessions")
  * @ORM\Entity
  */
-class DividoSession extends ModelEntity
+class Session extends ModelEntity
 {
     private $table = 's_sessions';
     /**
@@ -86,7 +86,7 @@ class DividoSession extends ModelEntity
     private $created_on;
 
     /**
-     * Array of the keys of fields we want to retain in the divido session table in
+     * Array of the keys of fields we want to retain in the session table in
      * case the session times out before the customer completes the signing process
      */
     private $retained_session_keys = array(
@@ -327,7 +327,7 @@ class DividoSession extends ModelEntity
 
     public function update($connection){
         if(!isset($this->id)){
-            DividoHelper::Debug('Could not update session: No unique id to reference');
+            Helper::Debug('Could not update session: No unique id to reference');
             return false;
         }
 
@@ -448,7 +448,7 @@ class DividoSession extends ModelEntity
 
     public static function updateByRef($connection, $session, $reference_key){
         if(!isset($session[$reference_key])){
-            DividoHelper::Debug('Could not update session: Reference key not set or does not exist');
+            Helper::Debug('Could not update session: Reference key not set or does not exist');
             return false;
         }
         $update_session_query = $connection->createQueryBuilder();

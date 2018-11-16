@@ -1,11 +1,11 @@
 <?php
 /**
- * Divido Payment Service - Webhook Response
+ * Payment Service - Webhook Response
  *
  * PHP version 5.5
  *
  * @category  CategoryName
- * @package   DividoPayment
+ * @package   FinancePlugin
  * @author    Original Author <jonthan.carter@divido.com>
  * @author    Another Author <andrew.smith@divido.com>
  * @copyright 2014-2018 Divido Financial Services
@@ -13,23 +13,23 @@
  * @link      http://github.com/DividoFinancialServices/divido-shopware
  * @since     File available since Release 1.0.0
  */
-use DividoPayment\Components\DividoPayment\DividoPaymentService;
-use DividoPayment\Components\DividoPayment\DividoRequestService;
-use DividoPayment\Components\DividoPayment\DividoOrderService;
-use DividoPayment\Components\DividoPayment\DividoHelper;
-use DividoPayment\Models\Request;
+use FinancePlugin\Components\Finance\PaymentService;
+use FinancePlugin\Components\Finance\RequestService;
+use FinancePlugin\Components\Finance\OrderService;
+use FinancePlugin\Components\Finance\Helper;
+use FinancePlugin\Models\Request;
 use Shopware\Components\CSRFWhitelistAware;
 
 require_once __DIR__ . '../../../vendor/autoload.php';
 //Include Divido PHP SDK
 
 /**
- * Divido Payment Service - Webhook Response
+ * Payment Service - Webhook Response
  *
  * PHP version 5.5
  *
  * @category  CategoryName
- * @package   DividoPayment
+ * @package   FinancePlugin
  * @author    Original Author <jonthan.carter@divido.com>
  * @author    Another Author <andrew.smith@divido.com>
  * @copyright 2014-2018 Divido Financial Services
@@ -37,10 +37,10 @@ require_once __DIR__ . '../../../vendor/autoload.php';
  * @link      http://github.com/DividoFinancialServices/divido-shopware
  * @since     File available since Release 1.0.0
  */
-class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_Frontend_Payment implements CSRFWhitelistAware //
+class Shopware_Controllers_Frontend_FinancePlugin extends Shopware_Controllers_Frontend_Payment implements CSRFWhitelistAware //
 {
     const
-        DIVIDO_PLUGIN_VERSION = "0.0.0.1",
+        PLUGIN_VERSION = "0.0.0.1",
         PAYMENTSTATUSPAID = 12,
         PAYMENTSTATUSOPEN = 17,
         PAYMENTREVIEWNEEDED = 21,
@@ -105,10 +105,13 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         /*
         * @var \Shopware\Components\Plugin $plugin 
         */
-        $plugin = $this->get('kernel')->getPlugins()['DividoPayment'];
+        $plugin = $this->get('kernel')->getPlugins()['FinancePlugin'];
         $this->get('template')->addTemplateDir(
             $plugin->getPath() . '/Resources/views/'
         );
+
+        error_reporting(E_ALL);
+        ini_set('display_errors', 1);
     }
 
     /**
@@ -120,7 +123,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      */
     public function indexAction()
     {
-        DividoHelper::debug('Index view', 'info');
+        Helper::debug('Index view', 'info');
         return $this->redirect(['action' => 'finance', 'forceSecure' => false]);
     }
 
@@ -135,35 +138,39 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      */
     public function directAction()
     {
-        DividoHelper::debug('Direct Action', 'info');
+        Helper::debug('Direct Action', 'info');
         
-        $service = $this->container->get('divido_payment.divido_payment_service');
+        $service = $this->container->get('finance_plugin.payment_service');
         $router = $this->Front()->Router();
-        $apiKey = DividoHelper::getApiKey();
+        $apiKey = Helper::getApiKey();
 
         $user = $this->getUser();
-        $customer = DividoHelper::getFormattedCustomerDetails($user);
+        $customer = Helper::getFormattedCustomerDetails($user);
         
         $basket = $this->getBasket();
         $amount = $this->getAmount();
 
-        $deposit = (isset($_POST['divido_deposit'])) 
-            ? DividoHelper::getDepositAmount(
-                $_POST['divido_deposit'],
+        $deposit_percentage = filter_var($_POST['divido_deposit'], FILTER_SANITIZE_NUMBER_INT); //TODO: Ubrand: Can't Change
+        $planId = filter_var($_POST['divido_plan'], FILTER_SANITIZE_EMAIL); //TODO: Ubrand: Can't Change
+        
+
+        $deposit = (empty($deposit_percentage))
+            ? 0
+            : Helper::getDepositAmount(
+                $deposit_percentage,
                 $amount
-            )
-            : 0;
+            );
+        
         
         $token = $service->createPaymentToken(
             $amount,
             $user['additional']['user']['customernumber']
         );
         
-        $planId = filter_var($_POST['divido_plan'], FILTER_SANITIZE_EMAIL);
         $checkout_url= $router->assemble(
             ['action' => 'cancel', 'forceSecure' => true]
         );
-        $session = new \DividoPayment\Models\DividoSession;
+        $session = new \FinancePlugin\Models\Session;
         $session->setKey($token);
         $session->setStatus(self::PAYMENTSTATUSOPEN);
         $session->setDataFromShopwareSession();
@@ -187,20 +194,20 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $request = new Request();
         $request->setFinancePlanId($planId);
         //$request->setMerchantChannelId($merchantChannelId);
-        $request->setApplicants(DividoRequestService::setApplicantsFromUser($user));
-        $request->setOrderItems(DividoRequestService::setOrderItemsFromBasket($basket));
+        $request->setApplicants(RequestService::setApplicantsFromUser($user));
+        $request->setOrderItems(RequestService::setOrderItemsFromBasket($basket));
         $request->setDepositAmount($deposit*100);
-        $request->setDepositPercentage($_POST['divido_deposit']/100);
+        $request->setDepositPercentage($deposit_percentage/100);
         $request->setUrls([
             'merchant_redirect_url' => $redirect_url ."?sid={$sessionId}&token={$token}",
             'merchant_checkout_url' => $checkout_url,
             'merchant_response_url' => $response_url
         ]);
-        $response = DividoRequestService::makeRequest($request);
+        $response = RequestService::makeRequest($request);
         
-        // Create divido session if request is okay and forward to the divido payment platform
+        // Create session if request is okay and forward to the payment platform
         if (isset($response->error)){
-            DividoHelper::debug(
+            Helper::debug(
                 $response->message."(".$response->context->property.": ".$response->context->more.")",
                 'error'
             );
@@ -224,22 +231,22 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      */
     public function financeAction()
     {
-        DividoHelper::debug('Finance view', 'info');
+        Helper::debug('Finance view', 'info');
         header('Access-Control-Allow-Origin: *');
         
         $basket = $this->getBasket();
-        $products = DividoHelper::getOrderProducts($basket);
+        $products = Helper::getOrderProducts($basket);
 
-        $title = DividoHelper::getTitle();
-        $description = DividoHelper::getDescription();
+        $title = Helper::getTitle();
+        $description = Helper::getDescription();
 
         $user = $this->getUser();
-        $customer = DividoHelper::getFormattedCustomerDetails($user);
+        $customer = Helper::getFormattedCustomerDetails($user);
 
         $displayWarning = [];
         $displayFinance = false;
         $amount = $this->getAmount();
-        $minCartAmount = DividoHelper::getCartThreshold();
+        $minCartAmount = Helper::getCartThreshold();
         if ($amount >= $minCartAmount) {
             $displayFinance = true;
         } else {
@@ -251,7 +258,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
             $displayWarning[] = "Shipping and billing address must match.";
         }
 
-        $apiKey = DividoHelper::getApiKey();
+        $apiKey = Helper::getApiKey();
         if (empty($apiKey)) {
             $displayFinance = false;
             $displayWarning[] =  "No Api Key Detected. Please contact the merchant.";
@@ -265,7 +272,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         $this->View()->assign('suffix', '');
         $this->View()->assign('displayForm', $displayFinance);
         $this->View()->assign('displayWarning', $displayWarning);
-        $this->View()->assign('basket_plans', implode(",", DividoHelper::getBasketPlans($products)));
+        $this->View()->assign('basket_plans', implode(",", Helper::getBasketPlans($products)));
     }
 
     /**
@@ -283,16 +290,16 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
      */
     public function returnAction()
     {
-        $paymentService = $this->container->get('divido_payment.divido_payment_service');
-        $orderService = $this->container->get('divido_payment.divido_order_service');
+        $paymentService = $this->container->get('finance_plugin.payment_service');
+        $orderService = $this->container->get('finance_plugin.order_service');
         
-        /** @var DividoPayment\Components\PaymentResponse $response */
+        /** @var FinancePlugin\Components\Finance\PaymentResponse $response */
         $response = $paymentService->createPaymentResponse($this->Request());
 
         if(isset($response->sessionId) && isset($response->token)){
             $sessionId = filter_var($response->sessionId,FILTER_SANITIZE_NUMBER_INT);
             $connection = $this->container->get('dbal_connection');
-            $session = new \DividoPayment\Models\DividoSession;
+            $session = new \FinancePlugin\Models\Session;
             
             if($session->retrieveFromDb($sessionId, $connection)){
                 $data = $session->getData();
@@ -300,8 +307,8 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                 $customer_number = $data['sUserData']['additional']['user']['customernumber'];
                 $amount = $data['sBasket']['sAmount'];
                 /*
-                /   If response token matches the information in the divido session 
-                /   $service = /Components/DividoPayment/DividoPaymentService.php 
+                /   If response token matches the information in the session 
+                /   $service = /Components/Finance/PaymentService.php 
                 */
                 if ($paymentService->isValidToken($amount, $customer_number, $response->token)) {
                     // If we haven't already generated the order already:
@@ -321,14 +328,14 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                             $data['ordernumber'] = $orderNumber;
                             $data['cleared'] = self::PAYMENTSTATUSPAID;
                             
-                            // Persist divido information to display on order in backend
+                            // Persist information to display on order in backend
                             $attributePersister = $this->container->get(
                                 'shopware_attribute.data_persister'
                             );
 
                             $attributeData = array(
-                                'divido_finance_id' => $session->getPlan(),
-                                'divido_deposit_value' => $session->getDeposit()
+                                'finance_id' => $session->getPlan(),
+                                'deposit_value' => $session->getDeposit()
                             );
                             
                             $attributePersister->persist(
@@ -347,7 +354,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                             session_write_close();
                         }else{
                             $this->View()->assign('error', 'Could not create order');
-                            $this->View()->assign('template', 'frontend/divido_payment/error.tpl');
+                            $this->View()->assign('template', 'frontend/finance_plugin/error.tpl');
                             return;
                         }
                     }else{
@@ -358,16 +365,16 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
                     /   Assign the relevant stored session information to the appropriate Smarty variables
                     */
                     $this->sendDataToSmarty($data);
-                    $this->View()->assign('template', 'frontend/divido_payment/success.tpl');
+                    $this->View()->assign('template', 'frontend/finance_plugin/success.tpl');
                 }else{
                     $this->View()->assign('error', 'Invalid token.');
-                    $this->View()->assign('template', 'frontend/divido_payment/error.tpl');
+                    $this->View()->assign('template', 'frontend/finance_plugin/error.tpl');
                 }
             }else{
-                $this->View()->assign('template', 'frontend/divido_payment/404.tpl');
+                $this->View()->assign('template', 'frontend/finance_plugin/404.tpl');
             }
         }
-        DividoHelper::debug('Return action', 'info');
+        Helper::debug('Return action', 'info');
     }
 
     /**
@@ -382,103 +389,102 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
     /**
      * Call back
      *
-     * A listener that can receive calls from Divido to update an order in shopware
+     * A listener that can receive calls from the platform to update an order in shopware
      * In the shopware documentation this webhook=notify
      *
      * @return void
      */
     public function webhookAction()
     {
-        DividoHelper::debug('Webhook', 'info');
+        Helper::debug('Webhook', 'info');
 
         /*
-         * @var DividoPaymentService $service 
+         * @var PaymentService $service 
          */
-        $service = $this->container->get('divido_payment.divido_payment_service');
+        $service = $this->container->get('finance_plugin.payment_service');
         $response = $service->createWebhookResponse($this->Request());
             
         if (!$response->status) {
-            DividoHelper::debug('No Response Status', 'error');
-            echo 'no response';
-            die();
+            Helper::debug('No Response Status', 'error');
+            die('no response');
         }
 
-        //DividoHelper::hmacSign();
+        //Helper::hmacSign();
 
         $transactionID = $response->proposal;
         $paymentUniqueID = $response->token;
 
-        DividoHelper::debug('Webhook data:'.serialize($response), 'error');
-        DividoHelper::debug('Webhook TransactionID:'.$transactionId, 'info');
-        DividoHelper::debug('Webhook Unique Payment ID:'.$paymentUniqueId, 'info');
+        Helper::debug('Webhook data:'.serialize($response), 'error');
+        Helper::debug('Webhook TransactionID:'.$transactionId, 'info');
+        Helper::debug('Webhook Unique Payment ID:'.$paymentUniqueId, 'info');
         $message ='';
 
         switch ($response->status) {
             case self::STATUS_PROPOSAL:
-                DividoHelper::debug('Webhook: Proposal', 'info');
+                Helper::debug('Webhook: Proposal', 'info');
                 $message ='Proposal Hook Success';
                 $session_status = self::PAYMENTSTATUSOPEN;
                 break;
 
             case self::STATUS_ACCEPTED:
-                DividoHelper::debug('Webhook: Accepted', 'info');
+                Helper::debug('Webhook: Accepted', 'info');
                 $message ='Accepted Hook Success';
                 $session_status = self::PAYMENTSTATUSOPEN;
                 break;
 
             case self::STATUS_SIGNED:
-                DividoHelper::debug('Webhook: Signed', 'info');
+                Helper::debug('Webhook: Signed', 'info');
                 $message ='Signed Hook Success';
                 $session_status = self::PAYMENTSTATUSPAID;
                 break;
 
             case self::STATUS_DECLINED:
-                DividoHelper::debug('Webhook: Declined', 'info');
+                Helper::debug('Webhook: Declined', 'info');
                 $message ='Declined Hook Success';
                 $order_status = self::PAYMENTREVIEWNEEDED;
                 $session_status = self::PAYMENTREVIEWNEEDED;
                 break;
 
             case self::STATUS_CANCELED:
-                DividoHelper::debug('Webhook: Canceled', 'info');
+                Helper::debug('Webhook: Canceled', 'info');
                 $message ='Canceled Hook Success';
                 $order_status = self::PAYMENTCANCELLED;
                 $session_status = self::PAYMENTCANCELLED;
                 break;
 
             case self::STATUS_DEPOSIT_PAID:
-                DividoHelper::debug('Webhook: Deposit Paid', 'info');
+                Helper::debug('Webhook: Deposit Paid', 'info');
                 $message ='Deposit Paid Hook Success';
                 $session_status = self::PAYMENTSTATUSOPEN;
                 break;
 
             case self::STATUS_ACTION_LENDER:
-                DividoHelper::debug('Webhook: Deposit Paid', 'info');
+                Helper::debug('Webhook: Deposit Paid', 'info');
                 break;
             
             case self::STATUS_COMPLETED:
                 $message ='Completed';
-                DividoHelper::debug('Webhook: Completed', 'info');
+                Helper::debug('Webhook: Completed', 'info');
                 break;
 
             case self::STATUS_DEFERRED:
                 $message ='Deferred Success';
-                DividoHelper::debug('Webhook: STATUS_DEFERRED', 'info');
+                Helper::debug('Webhook: STATUS_DEFERRED', 'info');
                 break;
 
             case self::STATUS_FULFILLED:
                 $message ='STATUS_FULFILLED Success';
-                DividoHelper::debug('Webhook: STATUS_FULFILLED', 'info');
+                Helper::debug('Webhook: STATUS_FULFILLED', 'info');
                 break;
 
             case self::STATUS_REFERRED:
                 $message ='Order Referred Success';
-                DividoHelper::debug('Webhook: Referred', 'info');
+                Helper::debug('Webhook: Referred', 'info');
                 break;
 
             default:
                 $message ='Empty Hook';
-                DividoHelper::debug('Webhook: Empty webook', 'warning');
+                Helper::debug('Webhook: Empty webook', 'warning');
                 break;
         }
 
@@ -492,7 +498,7 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
         
         if(isset($session_status)){
             $connection = $this->container->get('dbal_connection');
-            $session = new \DividoPayment\Models\DividoSession;
+            $session = new \FinancePlugin\Models\Session;
             $update = [
                 "status" => $session_status,
                 "transactionID" => $transactionID,
@@ -509,10 +515,10 @@ class Shopware_Controllers_Frontend_DividoPayment extends Shopware_Controllers_F
     }
 
     /**
-     * Take order information as received from s_divido_sessions table
+     * Take order information as received from s_finance_sessions table
      * and assign the data to the relevant Smarty variables
      * 
-     * @param array $order The session information stored in `s_divido_sessions` table `data` column
+     * @param array $order The session information stored in `s_finance_sessions` table `data` column
      * 
      * @return void
      */

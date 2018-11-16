@@ -1,11 +1,11 @@
 <?php
 /**
- * Divido Payment Service
+ * Finance Plugin Service
  *
  * PHP version 5.5
  *
  * @category  Payment_Gateway
- * @package   DividoPayment
+ * @package   FinancePlugin
  * @author    Original Author <jonthan.carter@divido.com>
  * @author    Another Author <andrew.smith@divido.com>
  * @copyright 2014-2018 Divido Financial Services
@@ -13,20 +13,20 @@
  * @link      http://github.com/DividoFinancialServices/divido-shopware
  * @since     File available since Release 1.0.0
  */
-namespace DividoPayment\Subscriber;
+namespace FinancePlugin\Subscriber;
 
 use Enlight\Event\SubscriberInterface;
-use DividoPayment\Components\DividoPayment\DividoPaymentService;
-use DividoPayment\Components\DividoPayment\DividoPlansService;
-use DividoPayment\Components\DividoPayment\DividoHelper;
+use FinancePlugin\Components\Finance\PaymentService;
+use FinancePlugin\Components\Finance\PlansService;
+use FinancePlugin\Components\Finance\Helper;
 
 /**
- * Divido Payment Service  Class
+ * Payment Service  Class
  *
  * PHP version 5.5
  *
  * @category  Payment_Gateway
- * @package   DividoPayment
+ * @package   FinancePlugin
  * @author    Original Author <jonthan.carter@divido.com>
  * @author    Another Author <andrew.smith@divido.com>
  * @copyright 2014-2018 Divido Financial Services
@@ -82,10 +82,11 @@ class TemplateRegistration implements SubscriberInterface
             $product = $view->sArticle;
 
             $config = Shopware()->Container()->get('shopware.plugin.cached_config_reader')
-                ->getByPluginName('DividoPayment');
+                ->getByPluginName('FinancePlugin');
 
             $min_product_amount = (isset($config['Minimum Amount'])) ? $config['Minimum Amount']*100 : 0;
             $product_price = filter_var($product['price'], FILTER_SANITIZE_NUMBER_INT);
+
             if($product_price > $min_product_amount){
                 $apiKey = $config["Api Key"];
                 $key = preg_split("/\./", $apiKey);
@@ -93,24 +94,21 @@ class TemplateRegistration implements SubscriberInterface
                 
                 $view->assign('plans', implode(",", $plans_ids));
 
-                if ($config['Widget Suffix']) {
-                    $suffix = 'data-divido-suffix="' . strip_tags($config['Widget Suffix']) . '"';
-                    $view->assign('suffix', $suffix);
-                }
+                $suffix = ($config['Widget Suffix']) ? strip_tags($config['Widget Suffix']) : "";
+                $view->assign('suffix', $suffix);
 
-                if ($config['Widget Prefix']) {
-                    $prefix = 'data-divido-prefix="' . strip_tags($config['Widget Prefix']) . '"';
-                    $view->assign('prefix', $prefix);
-                }
-                $plans = str_replace("|",",",$product['divido_finance_plans']);
+                $prefix = ($config['Widget Prefix']) ? strip_tags($config['Widget Prefix']) : "";
+                $view->assign('prefix', $prefix);
+
+                $plans = str_replace("|",",",$product['finance_plans']);
                 if(empty($plans)){
-                    $plans = DividoPlansService::updatePlans();
+                    $plans = PlansService::updatePlans();
                     foreach ($plans as $plan) $plans_ids[] = $plan->getId();
                     $view->assign('plans', implode(",", $plans_ids));
                 }else $view->assign('plans',$plans);
 
-                $view->assign('show_divido', true);
-            }else $view->assign('show_divido', false);
+                $view->assign('show_widget', true);
+            }else $view->assign('show_widget', false);
         }
     }
 }
