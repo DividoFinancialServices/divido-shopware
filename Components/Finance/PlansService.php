@@ -17,7 +17,8 @@ class PlansService
      */
     const REFRESH_RATE = 7200; 
 
-    public static function updatePlans():array{
+    public static function updatePlans():array
+    {
         $recent_plans = self::getStoredPlans();
         if (empty($recent_plans)) {
             $apiKey = Helper::getApiKey();
@@ -29,7 +30,8 @@ class PlansService
         }else return $recent_plans;
     }
 
-    public static function getStoredPlans(int $since = self::REFRESH_RATE):array{
+    public static function getStoredPlans(int $since = self::REFRESH_RATE):array
+    {
         $now = time();
         $recent_plans = Shopware()->Db()->query('SELECT * FROM `s_plans` WHERE `updated_on` > ?', [$now - $since]);
         if(!($recent_plans)) return [];
@@ -47,11 +49,15 @@ class PlansService
         }
     }
 
-    public static function getPlansFromSDK(string $apiKey):array{
-        $sdk = new Client($apiKey, Environment::SANDBOX);
+    public static function getPlansFromSDK(string $apiKey):array
+    {
+        $sdk = new Client(
+            $apiKey,
+            Helper::getEnvironment($apiKey)
+        );
         $requestOptions = (new ApiRequestOptions());
 
-                // Retrieve all finance plans for the merchant.
+        // Retrieve all finance plans for the merchant.
         $plans = $sdk->getAllPlans($requestOptions);
 
         $plans = $plans->getResources();
@@ -66,7 +72,8 @@ class PlansService
         return $return;
     }
 
-    public static function storePlans(array $plans):void{
+    public static function storePlans(array $plans):void
+    {
         $now = time();
         foreach ($plans as &$plan) {
             $plan->setUpdatedOn($now);

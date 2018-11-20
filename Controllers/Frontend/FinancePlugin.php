@@ -149,7 +149,6 @@ class Shopware_Controllers_Frontend_FinancePlugin extends Shopware_Controllers_F
         
         $basket = $this->getBasket();
         $amount = $this->getAmount();
-
         $deposit_percentage = filter_var($_POST['divido_deposit'], FILTER_SANITIZE_NUMBER_INT); //TODO: Ubrand: Can't Change
         $planId = filter_var($_POST['divido_plan'], FILTER_SANITIZE_EMAIL); //TODO: Ubrand: Can't Change
         
@@ -194,7 +193,10 @@ class Shopware_Controllers_Frontend_FinancePlugin extends Shopware_Controllers_F
         $request = new Request();
         $request->setFinancePlanId($planId);
         //$request->setMerchantChannelId($merchantChannelId);
+        $request->setCountryId($user['additional']['country']['countryiso']);
+        $request->setCurrencyId($basket['sCurrencyName']);
         $request->setApplicants(RequestService::setApplicantsFromUser($user));
+        $request->setLanguageId(RequestService::getLanguageId());
         $request->setOrderItems(RequestService::setOrderItemsFromBasket($basket));
         $request->setDepositAmount($deposit*100);
         $request->setDepositPercentage($deposit_percentage/100);
@@ -204,7 +206,7 @@ class Shopware_Controllers_Frontend_FinancePlugin extends Shopware_Controllers_F
             'merchant_response_url' => $response_url
         ]);
         $response = RequestService::makeRequest($request);
-        
+
         // Create session if request is okay and forward to the payment platform
         if (isset($response->error)){
             Helper::debug(
@@ -218,7 +220,7 @@ class Shopware_Controllers_Frontend_FinancePlugin extends Shopware_Controllers_F
             $session->setTransactionID($payload->id);
             $session->update($connection);
             
-            $this->redirect($payload->urls->merchant_success_redirect_url);
+            $this->redirect($payload->urls->application_url);
         }
     }
 
@@ -236,9 +238,6 @@ class Shopware_Controllers_Frontend_FinancePlugin extends Shopware_Controllers_F
         
         $basket = $this->getBasket();
         $products = Helper::getOrderProducts($basket);
-
-        $title = Helper::getTitle();
-        $description = Helper::getDescription();
 
         $user = $this->getUser();
         $customer = Helper::getFormattedCustomerDetails($user);
@@ -266,7 +265,8 @@ class Shopware_Controllers_Frontend_FinancePlugin extends Shopware_Controllers_F
         
         list($key,$stuff) = preg_split("/\./", $apiKey);
         $this->View()->assign('apiKey', $key);
-        $this->View()->assign('title', $title);
+        $this->View()->assign('title', Helper::getTitle());
+        $this->View()->assign('description', Helper::getDescription());
         $this->View()->assign('amount', $amount);
         $this->View()->assign('prefix', '');
         $this->View()->assign('suffix', '');
@@ -409,7 +409,7 @@ class Shopware_Controllers_Frontend_FinancePlugin extends Shopware_Controllers_F
             die('no response');
         }
 
-        //Helper::hmacSign();
+        Helper::hmacSign();
 
         $transactionID = $response->proposal;
         $paymentUniqueID = $response->token;

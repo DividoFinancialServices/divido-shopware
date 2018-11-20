@@ -81,34 +81,38 @@ class TemplateRegistration implements SubscriberInterface
         if ($controller->Request()->getActionName() == 'index'){
             $product = $view->sArticle;
 
-            $config = Shopware()->Container()->get('shopware.plugin.cached_config_reader')
-                ->getByPluginName('FinancePlugin');
+            $config = Helper::getConfig();
 
-            $min_product_amount = (isset($config['Minimum Amount'])) ? $config['Minimum Amount']*100 : 0;
-            $product_price = filter_var($product['price'], FILTER_SANITIZE_NUMBER_INT);
+            $show_widget = false;
+            if($config['Show Widget']){
+               
+                $min_product_amount = (isset($config['Widget Minimum'])) ? $config['Widget Minimum']*100 : 0;
+                $product_price = filter_var($product['price'], FILTER_SANITIZE_NUMBER_INT);
 
-            if($product_price > $min_product_amount){
-                $apiKey = $config["Api Key"];
-                $key = preg_split("/\./", $apiKey);
-                $view->assign('apiKey', $key[0]);
-                
-                $view->assign('plans', implode(",", $plans_ids));
-
-                $suffix = ($config['Widget Suffix']) ? strip_tags($config['Widget Suffix']) : "";
-                $view->assign('suffix', $suffix);
-
-                $prefix = ($config['Widget Prefix']) ? strip_tags($config['Widget Prefix']) : "";
-                $view->assign('prefix', $prefix);
-
-                $plans = str_replace("|",",",$product['finance_plans']);
-                if(empty($plans)){
-                    $plans = PlansService::updatePlans();
-                    foreach ($plans as $plan) $plans_ids[] = $plan->getId();
+                if($product_price > $min_product_amount){
+                    $apiKey = $config["Api Key"];
+                    $key = preg_split("/\./", $apiKey);
+                    $view->assign('apiKey', $key[0]);
+                    
                     $view->assign('plans', implode(",", $plans_ids));
-                }else $view->assign('plans',$plans);
 
-                $view->assign('show_widget', true);
-            }else $view->assign('show_widget', false);
+                    $suffix = ($config['Widget Suffix']) ? strip_tags($config['Widget Suffix']) : "";
+                    $view->assign('suffix', $suffix);
+
+                    $prefix = ($config['Widget Prefix']) ? strip_tags($config['Widget Prefix']) : "";
+                    $view->assign('prefix', $prefix);
+
+                    $plans = str_replace("|",",",$product['finance_plans']);
+                    if(empty($plans)){
+                        $plans = PlansService::updatePlans();
+                        foreach ($plans as $plan) $plans_ids[] = $plan->getId();
+                        $view->assign('plans', implode(",", $plans_ids));
+                    }else $view->assign('plans',$plans);
+
+                    $show_widget = true;
+                }
+            }
         }
+        $view->assign('show_widget', $show_widget);
     }
 }

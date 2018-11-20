@@ -13,8 +13,8 @@ class Request
     private $merchantChannelId = '';
     private $applicants = [];
     private $orderItems = [];
-    private $depositAmount = '';
-    private $depositPercentage = '';
+    private $depositAmount = 0;
+    private $depositPercentage = 0;
     private $finalisationRequired = false;
     private $merchantReference = '';
     private $urls = [
@@ -24,89 +24,93 @@ class Request
     ];
     private $metaData = [];
 
-    public function getCountryId(){
+    public function getCountryId():string
+    {
         return $this->countryId;
     }
-    public function setCountryId($countryId){
+
+    public function setCountryId($countryId):void
+    {
         $this->countryId = $countryId;
     }
 
-    public function getCurrencyId()
+    public function getCurrencyId():string
     {
         return $this->currencyId;
     }
-    public function setCurrencyId($currencyId)
+    public function setCurrencyId($currencyId):void
     {
-        $this->currencyId = $ccurrencyId;
+        $this->currencyId = $currencyId;
     }
 
-    public function getLanguageId()
+    public function getLanguageId():string
     {
         return $this->languageId;
     }
-    public function setLanguageId()
+    public function setLanguageId($languageId):void
     {
-        return $this->languageId;
+        $this->languageId = $languageId;
     }
 
-    public function setFinancePlanId($financePlanId)
+    public function setFinancePlanId($financePlanId):void
     {
         $this->financePlanId = $financePlanId;
     }
-    public function getFinancePlanId()
+    public function getFinancePlanId():string
     {
         return $this->financePlanId;
     }
 
-    public function setMerchantChannelId($merchantChannelId)
+    public function setMerchantChannelId($merchantChannelId):void
     {
         $this->merchantChannelId = $merchantChannelId;
     }
-    public function getMerchantChannelId()
+    public function getMerchantChannelId():string
     {
         return $this->merchantChannelId;
     }
 
-    public function setApplicants($applicants)
+    public function setApplicants($applicants):void
     {
         $this->applicants = $applicants;
     }
-    public function addApplicant($applicant){
+    public function addApplicant($applicant):void
+    {
         $this->applicants[] = $applicant;
     }
-    public function getApplicants()
+    public function getApplicants():array
     {
         return $this->applicants;
     }
 
-    public function setOrderItems($orderItems)
+    public function setOrderItems($orderItems):void
     {
         $this->orderItems = $orderItems;
     }
-    public function getOrderItems()
+    public function getOrderItems():array
     {
         return $this->orderItems;
     }
 
-    public function setDepositAmount($depositAmount)
+    public function setDepositAmount($depositAmount):void
     {
         $this->depositAmount = $depositAmount;
     }
-    public function getDepositAmount()
+    public function getDepositAmount():int
     {
         return $this->depositAmount;
     }
 
-    public function setDepositPercentage($depositPercentage)
+    public function setDepositPercentage($depositPercentage):void
     {
         $this->depositPercentage = $depositPercentage;
     }
-    public function getDepositPercentage()
+    public function getDepositPercentage():int
     {
         return $this->depositPercentage;
     }
     
-    public function setFinalisationRequired($finalisationRequired)
+    public function setFinalisationRequired($finalisationRequired):void
     {
         $this->finalisationRequired = $finalisationRequired;
     }
@@ -115,29 +119,29 @@ class Request
         return $this->finalisationRequired;
     }
     
-    public function setMerchantReference($merchantReference)
+    public function setMerchantReference($merchantReference):void
     {
         $this->merchantReference = $merchantReference;
     }
-    public function getMerchantReference()
+    public function getMerchantReference():string
     {
         return $this->merchantReference;
     }
 
-    public function setUrls($urls)
+    public function setUrls($urls):void
     {
         $this->urls = $urls;
     }
-    public function getUrls()
+    public function getUrls():array
     {
         return $this->urls;
     }
 
-    public function setMetadata($metaData)
+    public function setMetadata($metaData):void
     {
         $this->metaData = $metaData;
     }
-    public function getMetaData()
+    public function getMetaData():array
     {
         return $this->metaData;
     }

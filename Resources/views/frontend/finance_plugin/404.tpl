@@ -2,7 +2,9 @@
 
 {block name="frontend_checkout_finish_teaser_title"}<h2 class="panel--title teaser--title is--align-center">Sorry!</h2>{/block}
 {block name="frontend_checkout_finish_teaser_content"}
-    <p class="teaser--text is--align-center">This order could not be found. Please try again</p>
+    <p class="teaser--text is--align-center">
+        {s namespace="frontend/content/detail" name="ContentInfoNotFound"}Content could not be found{/s}
+    </p>
     <script>
         document.body.classList.add("is--ctl-checkout");
         document.body.classList.add("is--act-finish");

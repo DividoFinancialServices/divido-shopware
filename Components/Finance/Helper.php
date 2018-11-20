@@ -53,23 +53,6 @@ class Helper
         return;
     }
 
-
-    /**
-     * Create HMAC SIGNATURE
-     *
-     * @param string $payload      The payload for the signature
-     * @param string $sharedSecret The secret stored on the portal
-     *
-     * @return $signature
-     */
-    public static function createSignature($payload, $sharedSecret)
-    {
-        $signature = base64_encode(
-            hash_hmac('sha256', $payload, $sharedSecret, true)
-        );
-        return $signature;
-    }
-
     /**
      * Helper to grab the plugin configuration
      *
@@ -127,7 +110,7 @@ class Helper
     public static function getTitle()
     {
         $config = self::getConfig();
-        return $config['Title'];
+        return $config['Checkout Title'];
     }
 
     /**
@@ -138,7 +121,7 @@ class Helper
     public static function getDescription()
     {
         $config = self::getConfig();
-        return $config['Description'];
+        return $config['Checkout Description'];
     }
     /**
      * Helper to grab shared secret value
@@ -289,6 +272,22 @@ class Helper
         return $customerArray;
     }
 
+    /**
+     * Create HMAC SIGNATURE
+     *
+     * @param string $payload      The payload for the signature
+     * @param string $sharedSecret The secret stored on the portal
+     *
+     * @return $signature
+     */
+    public static function createSignature($payload, $sharedSecret)
+    {
+        $signature = base64_encode(
+            hash_hmac('sha256', $payload, $sharedSecret, true)
+        );
+        return $signature;
+    }
+
     public function hmacSign(){
         //Not working
         if (isset($_SERVER['HTTP_RAW_POST_DATA']) 
@@ -309,7 +308,9 @@ class Helper
             $callback_sign = $_SERVER['HTTP_X_DIVIDO_HMAC_SHA256']; /* TODO: Can this change?  */
 
             self::debug('Callback Sign: '.$callback_sign , 'info');
+            print_r($callback_sign);
             self::debug('Callback DATA: '.$data,'info');
+            print_r($data);
 
             $sign = self::createSignature($data, $sharedSecret);
 
