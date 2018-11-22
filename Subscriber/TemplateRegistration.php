@@ -1,18 +1,4 @@
 <?php
-/**
- * Finance Plugin Service
- *
- * PHP version 5.5
- *
- * @category  Payment_Gateway
- * @package   FinancePlugin
- * @author    Original Author <jonthan.carter@divido.com>
- * @author    Another Author <andrew.smith@divido.com>
- * @copyright 2014-2018 Divido Financial Services
- * @license   GNU General Public License family
- * @link      http://github.com/DividoFinancialServices/divido-shopware
- * @since     File available since Release 1.0.0
- */
 namespace FinancePlugin\Subscriber;
 
 use Enlight\Event\SubscriberInterface;
@@ -23,15 +9,10 @@ use FinancePlugin\Components\Finance\Helper;
 /**
  * Payment Service  Class
  *
- * PHP version 5.5
+ * PHP version 7.1
  *
  * @category  Payment_Gateway
  * @package   FinancePlugin
- * @author    Original Author <jonthan.carter@divido.com>
- * @author    Another Author <andrew.smith@divido.com>
- * @copyright 2014-2018 Divido Financial Services
- * @license   GNU General Public License family
- * @link      http://github.com/DividoFinancialServices/divido-shopware
  * @since     File available since Release 1.0.0
  */
 class TemplateRegistration implements SubscriberInterface

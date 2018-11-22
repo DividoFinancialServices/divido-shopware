@@ -7,8 +7,6 @@ use Divido\MerchantSDK\Client;
 use Divido\MerchantSDK\Environment;
 use Divido\MerchantSDK\Handlers\ApiRequestOptions;
 
-require_once __DIR__ . '../../../vendor/autoload.php';
-
 class PlansService
 {
     /**

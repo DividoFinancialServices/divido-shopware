@@ -20,8 +20,7 @@
             <description lang="en">
                 The optional shared secret is used to verify webhooks from your finance provider.
             </description>
-        </element> 
-
+        </element>
         <element required="false" type="text" scope="locale">
             <name>Checkout Title</name>
             <label lang="de">Checkout Title</label>

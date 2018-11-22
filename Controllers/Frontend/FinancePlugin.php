@@ -1,18 +1,5 @@
 <?php
-/**
- * Payment Service - Webhook Response
- *
- * PHP version 5.5
- *
- * @category  CategoryName
- * @package   FinancePlugin
- * @author    Original Author <jonthan.carter@divido.com>
- * @author    Another Author <andrew.smith@divido.com>
- * @copyright 2014-2018 Divido Financial Services
- * @license   GNU General Public License family
- * @link      http://github.com/DividoFinancialServices/divido-shopware
- * @since     File available since Release 1.0.0
- */
+
 use FinancePlugin\Components\Finance\PaymentService;
 use FinancePlugin\Components\Finance\RequestService;
 use FinancePlugin\Components\Finance\OrderService;
@@ -26,15 +13,10 @@ require_once __DIR__ . '../../../vendor/autoload.php';
 /**
  * Payment Service - Webhook Response
  *
- * PHP version 5.5
+ * PHP version 7.1
  *
  * @category  CategoryName
  * @package   FinancePlugin
- * @author    Original Author <jonthan.carter@divido.com>
- * @author    Another Author <andrew.smith@divido.com>
- * @copyright 2014-2018 Divido Financial Services
- * @license   GNU General Public License family
- * @link      http://github.com/DividoFinancialServices/divido-shopware
  * @since     File available since Release 1.0.0
  */
 class Shopware_Controllers_Frontend_FinancePlugin extends Shopware_Controllers_Frontend_Payment implements CSRFWhitelistAware //
@@ -109,9 +91,6 @@ class Shopware_Controllers_Frontend_FinancePlugin extends Shopware_Controllers_F
         $this->get('template')->addTemplateDir(
             $plugin->getPath() . '/Resources/views/'
         );
-
-        error_reporting(E_ALL);
-        ini_set('display_errors', 1);
     }
 
     /**
@@ -131,8 +110,6 @@ class Shopware_Controllers_Frontend_FinancePlugin extends Shopware_Controllers_F
      * Direct action method.
      *
      * Collects the payment information and transmits it to the payment provider.
-     * See
-     * http://developer.divido.com/#resources-credit-request
      *
      * @return void
      */

@@ -6,11 +6,6 @@
  *
  * @category  CategoryName
  * @package   FinancePlugin
- * @author    Original Author <jonthan.carter@divido.com>
- * @author    Another Author <andrew.smith@divido.com>
- * @copyright 2014-2018 Divido Financial Services
- * @license   GNU General Public License family
- * @link      http://github.com/DividoFinancialServices/divido-shopware
  * @since     File available since Release 1.0.0
  */
 namespace FinancePlugin\Components\Finance;
